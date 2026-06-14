@@ -3,7 +3,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { verifyPassword } from "@/lib/hash";
+import { verifyPassword, hashPassword } from "@/lib/hash";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "kavitas-kitchen-super-secret-key-12345"
@@ -109,3 +109,90 @@ export async function checkSession() {
     return null;
   }
 }
+
+/**
+ * Updates the admin credentials (username and/or password).
+ */
+export async function updateAdminCredentials(prevState: any, formData: FormData) {
+  try {
+    const session = await checkSession();
+    if (!session) {
+      return { error: "Unauthorized. Please log in first." };
+    }
+
+    const newUsername = formData.get("newUsername") as string;
+    const currentPassword = formData.get("currentPassword") as string;
+    const newPassword = formData.get("newPassword") as string;
+
+    if (!newUsername || newUsername.trim() === "") {
+      return { error: "Username cannot be empty." };
+    }
+
+    // Find the current user
+    const user = await db.user.findUnique({
+      where: { username: session.username },
+    });
+
+    if (!user) {
+      return { error: "Admin user not found in database." };
+    }
+
+    const updateData: { username?: string; passwordHash?: string } = {};
+
+    // If changing username
+    if (newUsername !== user.username) {
+      // Check if new username is already taken
+      const existingUser = await db.user.findUnique({
+        where: { username: newUsername },
+      });
+      if (existingUser) {
+        return { error: "Username already taken." };
+      }
+      updateData.username = newUsername;
+    }
+
+    // If changing password
+    if (newPassword) {
+      if (!currentPassword) {
+        return { error: "Please enter your current password to set a new one." };
+      }
+      const isPasswordValid = verifyPassword(currentPassword, user.passwordHash);
+      if (!isPasswordValid) {
+        return { error: "Current password is incorrect." };
+      }
+      if (newPassword.length < 6) {
+        return { error: "New password must be at least 6 characters long." };
+      }
+      updateData.passwordHash = hashPassword(newPassword);
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return { error: "No changes specified." };
+    }
+
+    // Update DB
+    await db.user.update({
+      where: { id: user.id },
+      data: updateData,
+    });
+
+    // Write audit log
+    await db.activityLog.create({
+      data: {
+        adminName: session.username,
+        action: "UPDATE_CREDENTIALS",
+        details: `Updated credentials. Username changed: ${newUsername !== user.username}. Password changed: ${!!newPassword}.`,
+      },
+    });
+
+    // If username or password changed, clear session cookie so they log in again
+    const cookieStore = await cookies();
+    cookieStore.delete("admin_session");
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating admin credentials:", error);
+    return { error: "An unexpected error occurred. Please try again." };
+  }
+}
+
