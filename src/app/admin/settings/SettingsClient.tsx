@@ -102,7 +102,8 @@ export default function SettingsClient({ initialConfig, currentAdminUsername }: 
   };
 
   return (
-    <div className="max-w-2xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 md:p-8 shadow-sm text-left transition-colors duration-300">
+    <div className="space-y-8 max-w-2xl text-left">
+      <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 md:p-8 shadow-sm transition-colors duration-300">
       
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Alerts */}
