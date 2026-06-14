@@ -6,7 +6,22 @@ import { ThemeToggle } from "./ui/ThemeToggle";
 import { ShoppingCart, Menu, X, PhoneCall } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+type Category = {
+  id: string;
+  name: string;
+};
+
+type BusinessConfig = {
+  phone: string;
+  whatsApp: string;
+  instagram: string;
+  address: string;
+  operatingHours: string;
+};
+
 interface HeaderProps {
+  categories: Category[];
+  config: BusinessConfig;
   onCartOpen: () => void;
 }
 
@@ -32,7 +47,7 @@ export const Logo: React.FC<{ className?: string }> = ({ className = "" }) => {
   );
 };
 
-export const Header: React.FC<HeaderProps> = ({ onCartOpen }) => {
+export const Header: React.FC<HeaderProps> = ({ categories, config, onCartOpen }) => {
   const { cartCount } = useCart();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -54,6 +69,8 @@ export const Header: React.FC<HeaderProps> = ({ onCartOpen }) => {
       element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
+
+  const cleanPhone = config.phone.replace(/[^0-9+]/g, "");
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)]/90 backdrop-blur-md border-b border-[var(--card-border)] transition-colors duration-300">
@@ -101,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({ onCartOpen }) => {
 
           {/* Call Button (Mobile Shortcut) */}
           <a
-            href="tel:7848037181"
+            href={`tel:${cleanPhone}`}
             className="p-2.5 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream hover:text-brand-gold transition-colors duration-300 flex md:hidden"
             title="Call Us"
           >

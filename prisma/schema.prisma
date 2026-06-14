@@ -1,0 +1,83 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id        String     @id
+  name      String
+  order     Int        @default(0)
+  menuItems MenuItem[]
+}
+
+model MenuItem {
+  id            String   @id
+  name          String
+  description   String
+  price         Float
+  discountPrice Float?
+  image         String
+  isVeg         Boolean  @default(false)
+  isPopular     Boolean  @default(false)
+  isChefSpecial Boolean  @default(false)
+  isFeatured    Boolean  @default(false)
+  isBestSeller  Boolean  @default(false)
+  availability  String   @default("AVAILABLE") // AVAILABLE, OUT_OF_STOCK, SEASONAL, COMING_SOON
+  order         Int      @default(0)
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}
+
+model SubscriptionPlan {
+  id           String @id
+  name         String
+  description  String
+  weeklyPrice  Float
+  monthlyPrice Float
+  image        String
+  features     String // Stored as JSON string
+  type         String // student, office, family
+}
+
+model Review {
+  id       String  @id
+  name     String
+  rating   Int
+  text     String
+  location String
+  date     String
+  approved Boolean @default(false)
+  isPinned Boolean @default(false)
+}
+
+model BusinessConfig {
+  id             String @id @default("config")
+  phone          String
+  whatsApp       String
+  instagram      String
+  address        String
+  operatingHours String
+  heroTitle      String
+  heroSubtitle   String
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  adminName String
+  action    String
+  details   String
+  createdAt DateTime @default(now())
+}

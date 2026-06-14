@@ -5,7 +5,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/Button";
 import { ShoppingBag, ChevronRight, CheckCircle2, ChevronLeft } from "lucide-react";
 
-export const Hero: React.FC = () => {
+type BusinessConfig = {
+  phone: string;
+  whatsApp: string;
+  instagram: string;
+  address: string;
+  operatingHours: string;
+  heroTitle: string;
+  heroSubtitle: string;
+};
+
+interface HeroProps {
+  config: BusinessConfig;
+}
+
+export const Hero: React.FC<HeroProps> = ({ config }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const showcaseImages = [
@@ -41,7 +55,7 @@ export const Hero: React.FC = () => {
 
   const handleWhatsAppOrder = () => {
     const defaultMsg = encodeURIComponent("Hello Kavita's Kitchen, I would like to place an order.");
-    window.open(`https://wa.me/917848037181?text=${defaultMsg}`, "_blank");
+    window.open(`https://wa.me/${config.whatsApp}?text=${defaultMsg}`, "_blank");
   };
 
   const features = [
@@ -49,6 +63,22 @@ export const Hero: React.FC = () => {
     "Freshly Cooked Daily",
     "Healthy Home-style Meals"
   ];
+
+  // Helper to format title and preserve locked design highlighted text
+  const formatTitle = (title: string) => {
+    const target = "Homemade Food";
+    if (title.includes(target)) {
+      const parts = title.split(target);
+      return (
+        <>
+          {parts[0]}
+          <span className="text-brand-gold block lg:inline">{target}</span>
+          {parts[1]}
+        </>
+      );
+    }
+    return title;
+  };
 
   return (
     <section
@@ -79,7 +109,7 @@ export const Hero: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.15 }}
               className="font-serif text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-brand-green dark:text-brand-cream leading-tight sm:leading-none"
             >
-              Authentic <span className="text-brand-gold block lg:inline">Homemade Food</span> in Puri
+              {formatTitle(config.heroTitle)}
             </motion.h1>
 
             <motion.p
@@ -88,7 +118,7 @@ export const Hero: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="text-lg sm:text-xl font-medium text-brand-green/75 dark:text-brand-cream/70 max-w-xl mx-auto lg:mx-0 leading-relaxed"
             >
-              Fresh • Hygienic • Delicious • Made With Love
+              {config.heroSubtitle}
             </motion.p>
 
             {/* CTAs */}
@@ -156,9 +186,9 @@ export const Hero: React.FC = () => {
               <ChevronLeft className="w-5 h-5 stroke-[2.5px]" />
             </button>
 
-            {/* Floating Showcase Wrapper to keep showcase and quality seal floating in unison */}
+            {/* Floating Showcase Wrapper */}
             <div className="relative animate-float flex justify-center items-center">
-              {/* Rounded Hero Showcase Image with slide animation */}
+              {/* Rounded Hero Showcase Image */}
               <div className="relative w-72 h-72 sm:w-96 sm:h-96 md:w-[450px] md:h-[450px] rounded-full overflow-hidden border-8 border-brand-gold shadow-2xl flex items-center justify-center">
                 <AnimatePresence mode="wait">
                   <motion.img
@@ -190,10 +220,8 @@ export const Hero: React.FC = () => {
               >
                 {/* Gold outer border ring with soft glassmorphism shadow */}
                 <div className="relative p-1 rounded-full bg-gradient-to-br from-brand-gold via-brand-gold/50 to-brand-green/30 backdrop-blur-md shadow-[0_10px_25px_rgba(15,61,46,0.25)] dark:shadow-[0_10px_25px_rgba(0,0,0,0.5)] border border-white/20">
-                  
                   {/* Secondary green inner ring */}
                   <div className="p-0.5 rounded-full bg-brand-green/10 dark:bg-brand-cream/10">
-                    
                     {/* The circular Logo */}
                     <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-brand-gold bg-brand-cream flex items-center justify-center">
                       <img

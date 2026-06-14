@@ -4,20 +4,31 @@ import React from "react";
 import { Logo } from "./Header";
 import { Phone, MapPin, Clock, Heart } from "lucide-react";
 
-export const Footer: React.FC = () => {
+type Category = {
+  id: string;
+  name: string;
+};
+
+type BusinessConfig = {
+  phone: string;
+  whatsApp: string;
+  instagram: string;
+  address: string;
+  operatingHours: string;
+};
+
+interface FooterProps {
+  categories: Category[];
+  config: BusinessConfig;
+}
+
+export const Footer: React.FC<FooterProps> = ({ categories, config }) => {
   const quickLinks = [
     { label: "Our Story", href: "#about" },
     { label: "Why Choose Us", href: "#why-us" },
     { label: "Popular Menu", href: "#menu" },
     { label: "Meal Subscriptions", href: "#subscriptions" },
     { label: "Customer Reviews", href: "#reviews" }
-  ];
-
-  const categories = [
-    { label: "Odia Specials", href: "#menu" },
-    { label: "Traditional Thalis", href: "#menu" },
-    { label: "Crispy Snacks", href: "#menu" },
-    { label: "Refreshing Drinks", href: "#menu" }
   ];
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -27,6 +38,8 @@ export const Footer: React.FC = () => {
       element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
+
+  const cleanPhone = config.phone.replace(/[^0-9+]/g, "");
 
   return (
     <footer className="bg-brand-green text-brand-cream border-t-4 border-brand-gold pt-16 pb-8 transition-colors duration-300">
@@ -40,7 +53,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="flex items-center gap-3">
               <a
-                href="https://instagram.com/kavita.kitchen_"
+                href={`https://instagram.com/${config.instagram}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2.5 rounded-full bg-brand-green-light border border-brand-cream/20 hover:border-brand-gold text-brand-gold hover:text-brand-cream transition-all duration-300 flex items-center justify-center"
@@ -92,14 +105,14 @@ export const Footer: React.FC = () => {
               Categories
             </h4>
             <ul className="space-y-3">
-              {categories.map((link) => (
-                <li key={link.label}>
+              {categories.slice(0, 4).map((cat) => (
+                <li key={cat.id}>
                   <a
-                    href={link.href}
-                    onClick={(e) => handleLinkClick(e, link.href)}
+                    href="#menu"
+                    onClick={(e) => handleLinkClick(e, "#menu")}
                     className="text-sm text-brand-cream/80 hover:text-brand-gold transition-colors duration-200 font-medium"
                   >
-                    {link.label}
+                    {cat.name}
                   </a>
                 </li>
               ))}
@@ -115,22 +128,22 @@ export const Footer: React.FC = () => {
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-brand-gold shrink-0 mt-0.5" />
                 <span className="text-sm text-brand-cream/80 font-medium leading-relaxed">
-                  Puri, Odisha, India
+                  {config.address}
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-brand-gold shrink-0" />
                 <a
-                  href="tel:7848037181"
+                  href={`tel:${cleanPhone}`}
                   className="text-sm text-brand-cream/80 hover:text-brand-gold font-medium transition-colors"
                 >
-                  +91 78480 37181
+                  {config.phone}
                 </a>
               </li>
               <li className="flex items-start gap-3">
                 <Clock className="w-5 h-5 text-brand-gold shrink-0 mt-0.5" />
                 <div className="text-sm text-brand-cream/80 font-medium">
-                  <p>Daily Cooking: 10:00 AM - 10:00 PM</p>
+                  <p>{config.operatingHours}</p>
                   <p className="text-xs text-brand-cream/60 mt-0.5">Order 1 hour in advance</p>
                 </div>
               </li>

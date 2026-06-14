@@ -1,12 +1,27 @@
 "use client";
 
 import React, { useState } from "react";
-import { SUBSCRIPTION_PLANS } from "@/data/menuData";
 import { Card, CardContent } from "./ui/Card";
 import { Button } from "./ui/Button";
 import { Calendar, User, ShieldCheck } from "lucide-react";
 
-export const Subscriptions: React.FC = () => {
+type SubscriptionPlan = {
+  id: string;
+  name: string;
+  description: string;
+  weeklyPrice: number;
+  monthlyPrice: number;
+  image: string;
+  features: string[];
+  type: string;
+};
+
+interface SubscriptionsProps {
+  plans: SubscriptionPlan[];
+  whatsApp?: string;
+}
+
+export const Subscriptions: React.FC<SubscriptionsProps> = ({ plans, whatsApp = "917848037181" }) => {
   const [billingCycle, setBillingCycle] = useState<"weekly" | "monthly">("monthly");
 
   const handleSubscribe = (planName: string, price: number) => {
@@ -14,7 +29,7 @@ export const Subscriptions: React.FC = () => {
     const text = encodeURIComponent(
       `Hello Kavita's Kitchen, I am interested in subscribing to the "${planName}" on a ${cycleText} basis (Price: ₹${price}). Please provide more details.`
     );
-    window.open(`https://wa.me/917848037181?text=${text}`, "_blank");
+    window.open(`https://wa.me/${whatsApp}?text=${text}`, "_blank");
   };
 
   const getPlanIcon = (type: string) => {
@@ -73,7 +88,7 @@ export const Subscriptions: React.FC = () => {
 
         {/* Subscription Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-          {SUBSCRIPTION_PLANS.map((plan) => {
+          {plans.map((plan) => {
             const price = billingCycle === "weekly" ? plan.weeklyPrice : plan.monthlyPrice;
             const savingsText = billingCycle === "monthly" ? "Save up to 15%" : "Flexible commitment";
             

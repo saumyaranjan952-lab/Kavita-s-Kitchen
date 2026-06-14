@@ -1,47 +1,58 @@
-"use client";
+import React from "react";
+import { db } from "@/lib/db";
+import HomeClient from "./HomeClient";
 
-import React, { useState } from "react";
-import { Header } from "@/components/Header";
-import { Hero } from "@/components/Hero";
-import { About } from "@/components/About";
-import { WhyChooseUs } from "@/components/WhyChooseUs";
-import { Menu } from "@/components/Menu";
-import { Subscriptions } from "@/components/Subscriptions";
-import { Testimonials } from "@/components/Testimonials";
-import { InstagramFeed } from "@/components/Instagram";
-import { Contact } from "@/components/Contact";
-import { Footer } from "@/components/Footer";
-import { CartDrawer } from "@/components/CartDrawer";
-import { FloatingWA } from "@/components/FloatingWA";
+export const dynamic = "force-dynamic";
 
-export default function Home() {
-  const [isCartOpen, setIsCartOpen] = useState(false);
+export default async function HomePage() {
+  // Query all landing page contents from the database
+  const [categories, menuItems, subscriptionPlans, reviews, config] = await Promise.all([
+    db.category.findMany({ orderBy: { order: "asc" } }),
+    db.menuItem.findMany({ 
+      where: { availability: "AVAILABLE" }, 
+      orderBy: { order: "asc" } 
+    }),
+    db.subscriptionPlan.findMany(),
+    db.review.findMany({ 
+      where: { approved: true, isPinned: true } 
+    }),
+    db.businessConfig.findUnique({ 
+      where: { id: "config" } 
+    }),
+  ]);
 
-  return (
-    <div className="relative min-h-screen flex flex-col">
-      {/* Navigation */}
-      <Header onCartOpen={() => setIsCartOpen(true)} />
+  // Parse features JSON string to array for subscriptions
+  const parsedPlans = subscriptionPlans.map((plan) => {
+    let features: string[] = [];
+    try {
+      features = JSON.parse(plan.features);
+    } catch (e) {
+      features = [];
+    }
+    return {
+      ...plan,
+      features,
+    };
+  });
 
-      {/* Main Sections */}
-      <main className="flex-grow">
-        <Hero />
-        <About />
-        <WhyChooseUs />
-        <Menu />
-        <Subscriptions />
-        <Testimonials />
-        <InstagramFeed />
-        <Contact />
-      </main>
+  const content = {
+    categories,
+    menuItems: menuItems.map(item => ({
+      ...item,
+      discountPrice: item.discountPrice ?? null
+    })),
+    subscriptionPlans: parsedPlans,
+    reviews,
+    config: config || {
+      phone: "+91 78480 37181",
+      whatsApp: "917848037181",
+      instagram: "kavita.kitchen_",
+      address: "Puri, Odisha, India",
+      operatingHours: "Daily Cooking: 10:00 AM - 10:00 PM",
+      heroTitle: "Authentic Homemade Food in Puri",
+      heroSubtitle: "Fresh • Hygienic • Delicious • Made With Love",
+    },
+  };
 
-      {/* Footer */}
-      <Footer />
-
-      {/* Persistent WhatsApp Floating Button */}
-      <FloatingWA />
-
-      {/* Cart Slider Drawer */}
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-    </div>
-  );
+  return <HomeClient data={content} />;
 }

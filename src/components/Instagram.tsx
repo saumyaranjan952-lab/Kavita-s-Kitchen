@@ -5,7 +5,15 @@ import { motion } from "framer-motion";
 import { Heart, MessageCircle } from "lucide-react";
 import { Button } from "./ui/Button";
 
-export const InstagramFeed: React.FC = () => {
+type BusinessConfig = {
+  instagram: string;
+};
+
+interface InstagramFeedProps {
+  config: BusinessConfig;
+}
+
+export const InstagramFeed: React.FC<InstagramFeedProps> = ({ config }) => {
   const feedImages = [
     {
       url: "/images/dalma_special.jpg",
@@ -30,7 +38,7 @@ export const InstagramFeed: React.FC = () => {
   ];
 
   const handleFollow = () => {
-    window.open("https://instagram.com/kavita.kitchen_", "_blank");
+    window.open(`https://instagram.com/${config.instagram}`, "_blank");
   };
 
   return (
@@ -46,7 +54,7 @@ export const InstagramFeed: React.FC = () => {
             Moments From Our Kitchen
           </h2>
           <p className="text-sm text-brand-green/75 dark:text-brand-cream/70 font-semibold">
-            Follow us on Instagram <a href="https://instagram.com/kavita.kitchen_" target="_blank" rel="noopener" className="text-brand-gold hover:underline">@kavita.kitchen_</a> for daily specials, behind-the-scenes cooking, and quick updates.
+            Follow us on Instagram <a href={`https://instagram.com/${config.instagram}`} target="_blank" rel="noopener" className="text-brand-gold hover:underline">@{config.instagram}</a> for daily specials, behind-the-scenes cooking, and quick updates.
           </p>
         </div>
 
@@ -54,7 +62,7 @@ export const InstagramFeed: React.FC = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {feedImages.map((img, i) => (
             <motion.a
-              href="https://instagram.com/kavita.kitchen_"
+              href={`https://instagram.com/${config.instagram}`}
               target="_blank"
               rel="noopener noreferrer"
               key={i}

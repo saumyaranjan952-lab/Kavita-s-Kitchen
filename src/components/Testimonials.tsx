@@ -1,27 +1,44 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { REVIEWS } from "@/data/menuData";
 import { Card, CardContent } from "./ui/Card";
 import { Star, ChevronLeft, ChevronRight, Quote } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export const Testimonials: React.FC = () => {
+type Review = {
+  id: string;
+  name: string;
+  rating: number;
+  text: string;
+  location: string;
+  date: string;
+};
+
+interface TestimonialsProps {
+  reviews: Review[];
+}
+
+export const Testimonials: React.FC<TestimonialsProps> = ({ reviews }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
+    if (!reviews || reviews.length === 0) return;
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % REVIEWS.length);
+      setCurrentIndex((prev) => (prev + 1) % reviews.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, []);
+  }, [reviews?.length]);
+
+  if (!reviews || reviews.length === 0) {
+    return null; // Don't render if no reviews are approved & pinned
+  }
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + REVIEWS.length) % REVIEWS.length);
+    setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % REVIEWS.length);
+    setCurrentIndex((prev) => (prev + 1) % reviews.length);
   };
 
   return (
@@ -57,23 +74,23 @@ export const Testimonials: React.FC = () => {
                   
                   {/* Rating */}
                   <div className="flex items-center justify-center gap-1">
-                    {[...Array(REVIEWS[currentIndex].rating)].map((_, i) => (
+                    {Array.from({ length: reviews[currentIndex].rating }).map((_, i) => (
                       <Star key={i} className="w-5 h-5 fill-brand-gold text-brand-gold" />
                     ))}
                   </div>
 
                   {/* Review Text */}
                   <p className="text-lg sm:text-xl font-medium italic text-brand-green/80 dark:text-brand-cream/80 leading-relaxed font-serif">
-                    &ldquo;{REVIEWS[currentIndex].text}&rdquo;
+                    &ldquo;{reviews[currentIndex].text}&rdquo;
                   </p>
 
                   {/* Customer Info */}
                   <div className="space-y-1">
                     <h4 className="text-base font-extrabold text-brand-green dark:text-brand-cream">
-                      {REVIEWS[currentIndex].name}
+                      {reviews[currentIndex].name}
                     </h4>
                     <p className="text-xs text-brand-gold font-bold uppercase tracking-widest">
-                      {REVIEWS[currentIndex].location}
+                      {reviews[currentIndex].location}
                     </p>
                   </div>
                 </CardContent>
@@ -94,7 +111,7 @@ export const Testimonials: React.FC = () => {
           
           {/* Indicators */}
           <div className="flex gap-2">
-            {REVIEWS.map((_, i) => (
+            {reviews.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentIndex(i)}

@@ -1,21 +1,46 @@
 "use client";
 
 import React, { useState } from "react";
-import { MENU_CATEGORIES, MENU_ITEMS } from "@/data/menuData";
 import { useCart } from "@/context/CartContext";
 import { Card, CardContent } from "./ui/Card";
 import { Plus, Minus, Search, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export const Menu: React.FC = () => {
+type Category = {
+  id: string;
+  name: string;
+};
+
+type MenuItem = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  discountPrice: number | null;
+  image: string;
+  isVeg: boolean;
+  isPopular: boolean;
+  isChefSpecial: boolean;
+  isFeatured: boolean;
+  isBestSeller: boolean;
+  availability: string;
+  categoryId: string;
+};
+
+interface MenuProps {
+  categories: Category[];
+  menuItems: MenuItem[];
+}
+
+export const Menu: React.FC<MenuProps> = ({ categories, menuItems }) => {
   const { cart, addToCart, updateQuantity } = useCart();
-  const [activeCategory, setActiveCategory] = useState("odia-specials");
+  const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "odia-specials");
   const [searchQuery, setSearchQuery] = useState("");
   const [vegOnly, setVegOnly] = useState(false);
 
-  // Filter items
-  const filteredItems = MENU_ITEMS.filter((item) => {
-    const matchesCategory = item.category === activeCategory;
+  // Filter items based on active category tab, search input, and veg switch
+  const filteredItems = menuItems.filter((item) => {
+    const matchesCategory = item.categoryId === activeCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           item.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesVeg = vegOnly ? item.isVeg : true;
@@ -69,7 +94,7 @@ export const Menu: React.FC = () => {
 
           {/* Category Tabs */}
           <div className="flex items-center gap-3 overflow-x-auto pb-3 scrollbar-none justify-start sm:justify-center">
-            {MENU_CATEGORIES.map((category) => (
+            {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setActiveCategory(category.id)}
@@ -146,7 +171,7 @@ export const Menu: React.FC = () => {
                         {item.description}
                       </p>
 
-                      {/* Cart Buttons just like Zomato/Swiggy */}
+                      {/* Cart Buttons */}
                       <div className="pt-2">
                         {inCart ? (
                           <div className="flex items-center justify-between w-32 border-2 border-brand-gold rounded-full px-2 py-1 bg-[var(--card-bg)] shadow-inner">
@@ -173,7 +198,7 @@ export const Menu: React.FC = () => {
                               name: item.name,
                               price: item.price,
                               image: item.image,
-                              category: item.category
+                              category: item.categoryId
                             })}
                             className="flex items-center gap-2 px-5 py-2 border-2 border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-green-dark rounded-full text-xs sm:text-sm font-bold tracking-wide cursor-pointer transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 hover:shadow-md"
                           >

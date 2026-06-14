@@ -3,12 +3,20 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export const FloatingWA: React.FC = () => {
+type BusinessConfig = {
+  whatsApp: string;
+};
+
+interface FloatingWAProps {
+  config: BusinessConfig;
+}
+
+export const FloatingWA: React.FC<FloatingWAProps> = ({ config }) => {
   const [showTooltip, setShowTooltip] = useState(false);
 
   const handleClick = () => {
     const defaultMsg = encodeURIComponent("Hello Kavita's Kitchen, I would like to place an order.");
-    window.open(`https://wa.me/917848037181?text=${defaultMsg}`, "_blank");
+    window.open(`https://wa.me/${config.whatsApp}?text=${defaultMsg}`, "_blank");
   };
 
   return (

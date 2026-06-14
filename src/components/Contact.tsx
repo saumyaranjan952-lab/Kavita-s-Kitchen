@@ -5,18 +5,32 @@ import { Card, CardContent } from "./ui/Card";
 import { Button } from "./ui/Button";
 import { Phone, MapPin, Navigation, MessageSquare } from "lucide-react";
 
-export const Contact: React.FC = () => {
+type BusinessConfig = {
+  phone: string;
+  whatsApp: string;
+  instagram: string;
+  address: string;
+  operatingHours: string;
+};
+
+interface ContactProps {
+  config: BusinessConfig;
+}
+
+export const Contact: React.FC<ContactProps> = ({ config }) => {
+  const cleanPhone = config.phone.replace(/[^0-9+]/g, "");
+
   const handleCall = () => {
-    window.location.href = "tel:7848037181";
+    window.location.href = `tel:${cleanPhone}`;
   };
 
   const handleWhatsApp = () => {
     const defaultMsg = encodeURIComponent("Hello Kavita's Kitchen, I would like to place an order.");
-    window.open(`https://wa.me/917848037181?text=${defaultMsg}`, "_blank");
+    window.open(`https://wa.me/${config.whatsApp}?text=${defaultMsg}`, "_blank");
   };
 
   const handleDirections = () => {
-    window.open("https://maps.google.com/?q=Puri,Odisha,India", "_blank");
+    window.open(`https://maps.google.com/?q=${encodeURIComponent(config.address)}`, "_blank");
   };
 
   return (
@@ -58,7 +72,7 @@ export const Contact: React.FC = () => {
                       </div>
                       <div className="text-left font-semibold">
                         <p className="text-xs text-brand-gold font-bold uppercase tracking-wider">Address</p>
-                        <p className="text-sm text-brand-green dark:text-brand-cream mt-0.5">Puri, Odisha, India</p>
+                        <p className="text-sm text-brand-green dark:text-brand-cream mt-0.5">{config.address}</p>
                       </div>
                     </li>
 
@@ -68,8 +82,8 @@ export const Contact: React.FC = () => {
                       </div>
                       <div className="text-left font-semibold">
                         <p className="text-xs text-brand-gold font-bold uppercase tracking-wider">Phone</p>
-                        <a href="tel:7848037181" className="text-sm text-brand-green dark:text-brand-cream mt-0.5 hover:underline block">
-                          +91 78480 37181
+                        <a href={`tel:${cleanPhone}`} className="text-sm text-brand-green dark:text-brand-cream mt-0.5 hover:underline block">
+                          {config.phone}
                         </a>
                       </div>
                     </li>
