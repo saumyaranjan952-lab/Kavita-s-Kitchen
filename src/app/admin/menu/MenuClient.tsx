@@ -7,7 +7,7 @@ import {
   deleteMenuItem, 
   toggleMenuItemField 
 } from "@/lib/actions/menu";
-import { Plus, Search, Edit2, Trash2, X, Upload, Sparkles, Check, HelpCircle } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, X, Upload, Sparkles, Check, HelpCircle, Copy } from "lucide-react";
 
 type Category = {
   id: string;
@@ -181,6 +181,25 @@ export default function MenuClient({ initialCategories, initialMenuItems }: Menu
     setFormIsBestSeller(item.isBestSeller);
     setFormAvailability(item.availability);
     setFormOrder(String(item.order));
+    setErrorMsg("");
+    setIsModalOpen(true);
+  };
+
+  const openDuplicateModal = (item: MenuItem) => {
+    setEditingItem(null);
+    setFormName(`${item.name} (Copy)`);
+    setFormDescription(item.description);
+    setFormPrice(String(item.price));
+    setFormDiscountPrice(item.discountPrice ? String(item.discountPrice) : "");
+    setFormImage(item.image);
+    setFormCategoryId(item.categoryId);
+    setFormIsVeg(item.isVeg);
+    setFormIsPopular(item.isPopular);
+    setFormIsChefSpecial(item.isChefSpecial);
+    setFormIsFeatured(item.isFeatured);
+    setFormIsBestSeller(item.isBestSeller);
+    setFormAvailability(item.availability);
+    setFormOrder(String(item.order + 1));
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -397,6 +416,13 @@ export default function MenuClient({ initialCategories, initialMenuItems }: Menu
                   </td>
                   <td className="py-4 px-6 text-right">
                     <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => openDuplicateModal(item)}
+                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50/50 dark:hover:bg-zinc-800 rounded-xl transition-all cursor-pointer"
+                        title="Duplicate Dish"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => openEditModal(item)}
                         className="p-2 text-gray-400 hover:text-[#D4AF37] hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-all cursor-pointer"
@@ -633,7 +659,7 @@ export default function MenuClient({ initialCategories, initialMenuItems }: Menu
                     onChange={(e) => setFormIsChefSpecial(e.target.checked)}
                     className="w-4 h-4 rounded text-[#D4AF37] border-gray-300 focus:ring-[#D4AF37] cursor-pointer"
                   />
-                  <span>Chef's Special</span>
+                  <span>Chef&apos;s Special</span>
                 </label>
 
                 <label className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-zinc-400 cursor-pointer">

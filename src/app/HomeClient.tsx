@@ -130,6 +130,7 @@ export default function HomeClient({ data }: HomeClientProps) {
             isOpen={isMenuOpen}
             onClose={() => setIsMenuOpen(false)}
             menuItems={data.menuItems}
+            categories={data.categories}
           />
         )}
       </AnimatePresence>

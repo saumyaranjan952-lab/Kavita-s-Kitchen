@@ -5,6 +5,11 @@ import { useCart } from "@/context/CartContext";
 import { Plus, Minus, Search, Sparkles, X, Flame, Sparkle, CircleDollarSign } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+type Category = {
+  id: string;
+  name: string;
+};
+
 type MenuItem = {
   id: string;
   name: string;
@@ -25,22 +30,14 @@ interface MenuOverlayProps {
   isOpen: boolean;
   onClose: () => void;
   menuItems: MenuItem[];
+  categories: Category[];
 }
-
-const UI_CATEGORIES = [
-  { id: "odia-specials", name: "Odia Specials" },
-  { id: "chicken-thali", name: "Chicken Thali" },
-  { id: "veg-thali", name: "Veg Thali" },
-  { id: "dalma", name: "Dalma" },
-  { id: "pakhala", name: "Pakhala" },
-  { id: "snacks", name: "Snacks" },
-  { id: "beverages", name: "Beverages" }
-];
 
 export const MenuOverlay: React.FC<MenuOverlayProps> = ({
   isOpen,
   onClose,
-  menuItems
+  menuItems,
+  categories
 }) => {
   const { cart, addToCart, updateQuantity } = useCart();
   
@@ -50,7 +47,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
   // Custom Filter Pills (All, Best Seller, Popular, New, Budget)
   const [activeFilter, setActiveFilter] = useState<"all" | "bestseller" | "popular" | "new" | "budget">("all");
   
-  const [activeCategory, setActiveCategory] = useState("odia-specials");
+  const [activeCategory, setActiveCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -84,49 +81,31 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
     }
   };
 
-  // Helper to map dynamic database items to the 7 required categories
-  const getOverlayCategory = (item: MenuItem): string => {
-    if (item.id === "dalma") return "dalma";
-    if (item.id === "pakhala") return "pakhala";
-    if (item.id === "veg-thali") return "veg-thali";
-    if (item.id === "chicken-thali") return "chicken-thali";
-    if (item.id === "special-odia-thali") return "veg-thali";
-    if (item.categoryId === "snacks") return "snacks";
-    if (item.categoryId === "beverages") return "beverages";
-    if (item.categoryId === "odia-specials") return "odia-specials";
-
-    const nameLower = item.name.toLowerCase();
-    if (nameLower.includes("dalma")) return "dalma";
-    if (nameLower.includes("pakhala")) return "pakhala";
-    if (nameLower.includes("chicken thali")) return "chicken-thali";
-    if (nameLower.includes("veg thali") || nameLower.includes("ghara thali")) return "veg-thali";
-    if (item.categoryId === "thalis") return "veg-thali";
-
-    return "odia-specials";
-  };
-
   // 1. Dynamic filtering of categories based on food type
   // Show only categories that have items matching the selected activeFoodType (Veg vs Non-Veg)
   const matchingFoodTypeItems = menuItems.filter(
     (item) => item.isVeg === (activeFoodType === "veg")
   );
 
-  const availableCategories = UI_CATEGORIES.filter((cat) =>
-    matchingFoodTypeItems.some((item) => getOverlayCategory(item) === cat.id)
+  const availableCategories = categories.filter((cat) =>
+    matchingFoodTypeItems.some((item) => item.categoryId === cat.id)
   );
 
   // Automatically switch activeCategory if it's not available in the selected food type
   useEffect(() => {
-    const isCurrentCatAvailable = availableCategories.some((cat) => cat.id === activeCategory);
-    if (!isCurrentCatAvailable && availableCategories.length > 0) {
-      setActiveCategory(availableCategories[0].id);
+    if (availableCategories.length > 0) {
+      const isCurrentCatAvailable = availableCategories.some((cat) => cat.id === activeCategory);
+      if (!isCurrentCatAvailable) {
+        setActiveCategory(availableCategories[0].id);
+      }
+    } else {
+      setActiveCategory("");
     }
   }, [activeFoodType, availableCategories, activeCategory]);
 
   // 2. Filter menu items based on: Category, Food Type (Veg/Non-Veg), Filters, and Search Query
   const filteredItems = matchingFoodTypeItems.filter((item) => {
-    const itemCat = getOverlayCategory(item);
-    const matchesCategory = itemCat === activeCategory;
+    const matchesCategory = item.categoryId === activeCategory;
     
     const matchesSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
