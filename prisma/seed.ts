@@ -13,7 +13,7 @@ async function main() {
   console.log("Start seeding...");
 
   // Create admin user
-  const passwordHash = hashPassword("password123");
+  const passwordHash = hashPassword("KavitaAdmin2026!");
   const admin = await prisma.user.upsert({
     where: { username: "admin" },
     update: { passwordHash },
