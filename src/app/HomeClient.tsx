@@ -13,6 +13,9 @@ import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
 import { FloatingWA } from "@/components/FloatingWA";
+import { MenuOverlay } from "@/components/MenuOverlay";
+import { SubscriptionsOverlay } from "@/components/SubscriptionsOverlay";
+import { AnimatePresence } from "framer-motion";
 
 type Category = {
   id: string;
@@ -77,6 +80,8 @@ interface HomeClientProps {
 
 export default function HomeClient({ data }: HomeClientProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSubscriptionsOpen, setIsSubscriptionsOpen] = useState(false);
 
   return (
     <div className="relative min-h-screen flex flex-col">
@@ -85,11 +90,16 @@ export default function HomeClient({ data }: HomeClientProps) {
         categories={data.categories} 
         config={data.config} 
         onCartOpen={() => setIsCartOpen(true)} 
+        onMenuOpen={() => setIsMenuOpen(true)}
+        onSubscriptionsOpen={() => setIsSubscriptionsOpen(true)}
       />
 
       {/* Main Sections - inject dynamic database content */}
       <main className="flex-grow">
-        <Hero config={data.config} />
+        <Hero 
+          config={data.config} 
+          onMenuOpen={() => setIsMenuOpen(true)}
+        />
         <About />
         <WhyChooseUs />
         <Menu categories={data.categories} menuItems={data.menuItems} />
@@ -100,13 +110,43 @@ export default function HomeClient({ data }: HomeClientProps) {
       </main>
 
       {/* Footer - inject dynamic config and categories */}
-      <Footer categories={data.categories} config={data.config} />
+      <Footer 
+        categories={data.categories} 
+        config={data.config} 
+        onMenuOpen={() => setIsMenuOpen(true)}
+        onSubscriptionsOpen={() => setIsSubscriptionsOpen(true)}
+      />
 
       {/* Persistent WhatsApp Floating Button */}
       <FloatingWA config={data.config} />
 
       {/* Cart Slider Drawer */}
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+
+      {/* Menu Overlay */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <MenuOverlay
+            isOpen={isMenuOpen}
+            onClose={() => setIsMenuOpen(false)}
+            menuItems={data.menuItems}
+            categories={data.categories}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Subscriptions Overlay */}
+      <AnimatePresence>
+        {isSubscriptionsOpen && (
+          <SubscriptionsOverlay
+            isOpen={isSubscriptionsOpen}
+            onClose={() => setIsSubscriptionsOpen(false)}
+            plans={data.subscriptionPlans}
+            whatsApp={data.config.whatsApp}
+            phone={data.config.phone}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

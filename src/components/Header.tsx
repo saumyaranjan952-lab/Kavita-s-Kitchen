@@ -23,6 +23,8 @@ interface HeaderProps {
   categories: Category[];
   config: BusinessConfig;
   onCartOpen: () => void;
+  onMenuOpen?: () => void;
+  onSubscriptionsOpen?: () => void;
 }
 
 export const Logo: React.FC<{ className?: string }> = ({ className = "" }) => {
@@ -47,7 +49,12 @@ export const Logo: React.FC<{ className?: string }> = ({ className = "" }) => {
   );
 };
 
-export const Header: React.FC<HeaderProps> = ({ categories, config, onCartOpen }) => {
+export const Header: React.FC<HeaderProps> = ({
+  config,
+  onCartOpen,
+  onMenuOpen,
+  onSubscriptionsOpen
+}) => {
   const { cartCount } = useCart();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -64,6 +71,14 @@ export const Header: React.FC<HeaderProps> = ({ categories, config, onCartOpen }
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     setIsOpen(false);
+    if (href === "#menu" && onMenuOpen) {
+      onMenuOpen();
+      return;
+    }
+    if (href === "#subscriptions" && onSubscriptionsOpen) {
+      onSubscriptionsOpen();
+      return;
+    }
     const element = document.querySelector(href);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "start" });

@@ -20,9 +20,16 @@ type BusinessConfig = {
 interface FooterProps {
   categories: Category[];
   config: BusinessConfig;
+  onMenuOpen?: () => void;
+  onSubscriptionsOpen?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ categories, config }) => {
+export const Footer: React.FC<FooterProps> = ({
+  categories,
+  config,
+  onMenuOpen,
+  onSubscriptionsOpen
+}) => {
   const quickLinks = [
     { label: "Our Story", href: "#about" },
     { label: "Why Choose Us", href: "#why-us" },
@@ -33,6 +40,14 @@ export const Footer: React.FC<FooterProps> = ({ categories, config }) => {
 
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
+    if (href === "#menu" && onMenuOpen) {
+      onMenuOpen();
+      return;
+    }
+    if (href === "#subscriptions" && onSubscriptionsOpen) {
+      onSubscriptionsOpen();
+      return;
+    }
     const element = document.querySelector(href);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "start" });

@@ -17,9 +17,10 @@ type BusinessConfig = {
 
 interface HeroProps {
   config: BusinessConfig;
+  onMenuOpen?: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ config }) => {
+export const Hero: React.FC<HeroProps> = ({ config, onMenuOpen }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const showcaseImages = [
@@ -47,9 +48,13 @@ export const Hero: React.FC<HeroProps> = ({ config }) => {
   };
 
   const handleScrollToMenu = () => {
-    const menuSection = document.querySelector("#menu");
-    if (menuSection) {
-      menuSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (onMenuOpen) {
+      onMenuOpen();
+    } else {
+      const menuSection = document.querySelector("#menu");
+      if (menuSection) {
+        menuSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     }
   };
 
