@@ -1,9 +1,8 @@
-"use client";
-
 import React, { useState } from "react";
 import { Card, CardContent } from "./ui/Card";
 import { Button } from "./ui/Button";
 import { Calendar, User, ShieldCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type SubscriptionPlan = {
   id: string;
@@ -23,13 +22,10 @@ interface SubscriptionsProps {
 
 export const Subscriptions: React.FC<SubscriptionsProps> = ({ plans, whatsApp = "917848037181" }) => {
   const [billingCycle, setBillingCycle] = useState<"weekly" | "monthly">("monthly");
+  const router = useRouter();
 
-  const handleSubscribe = (planName: string, price: number) => {
-    const cycleText = billingCycle === "weekly" ? "Weekly" : "Monthly";
-    const text = encodeURIComponent(
-      `Hello Kavita's Kitchen, I am interested in subscribing to the "${planName}" on a ${cycleText} basis (Price: ₹${price}). Please provide more details.`
-    );
-    window.open(`https://wa.me/${whatsApp}?text=${text}`, "_blank");
+  const handleSubscribe = (planId: string) => {
+    router.push(`/subscribe/${planId}?cycle=${billingCycle}`);
   };
 
   const getPlanIcon = (type: string) => {
@@ -149,7 +145,7 @@ export const Subscriptions: React.FC<SubscriptionsProps> = ({ plans, whatsApp = 
                       variant="gold"
                       fullWidth
                       shimmer
-                      onClick={() => handleSubscribe(plan.name, price)}
+                      onClick={() => handleSubscribe(plan.id)}
                     >
                       Get Subscription
                     </Button>

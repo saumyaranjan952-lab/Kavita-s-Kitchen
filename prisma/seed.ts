@@ -12,9 +12,9 @@ function hashPassword(password: string): string {
 async function main() {
   console.log("Start seeding...");
 
-  // Create admin user
+  // 1. Create admin user in Admin table
   const passwordHash = hashPassword("KavitaAdmin2026!");
-  const admin = await prisma.user.upsert({
+  const admin = await prisma.admin.upsert({
     where: { username: "admin" },
     update: { passwordHash },
     create: {
@@ -25,7 +25,7 @@ async function main() {
   });
   console.log(`Created admin user: ${admin.username}`);
 
-  // Business Config
+  // 2. Business Config
   const config = await prisma.businessConfig.upsert({
     where: { id: "config" },
     update: {},
@@ -42,7 +42,7 @@ async function main() {
   });
   console.log("Created business configuration.");
 
-  // Categories
+  // 3. Categories
   const categories = [
     { id: "odia-specials", name: "Odia Specials", order: 1 },
     { id: "thalis", name: "Thalis", order: 2 },
@@ -59,9 +59,8 @@ async function main() {
   }
   console.log("Created food categories.");
 
-  // Menu Items
+  // 4. Menu Items
   const menuItems = [
-    // Odia Specials
     {
       id: "dalma",
       name: "Authentic Odia Dalma",
@@ -96,7 +95,20 @@ async function main() {
       categoryId: "odia-specials",
       isVeg: true,
       isPopular: false,
-      order: 2
+      order: 2,
+      rating: 4.6,
+      ingredients: ["Papaya", "Raw Banana", "Pointed Gourd", "Mustard Seeds", "Garlic", "Green Chillies", "Refined Oil"],
+      calories: 140,
+      protein: 2.5,
+      carbs: 18.0,
+      fat: 4.0,
+      serves: "1 Person",
+      portionSize: "Portion (300ml)",
+      spiceLevel: "Low",
+      customizations: [
+        { name: "Extra Garlic", price: 5 }
+      ],
+      relatedItems: ["dalma", "veg-thali"]
     },
     {
       id: "besara",
@@ -107,7 +119,20 @@ async function main() {
       categoryId: "odia-specials",
       isVeg: true,
       isPopular: false,
-      order: 3
+      order: 3,
+      rating: 4.7,
+      ingredients: ["Drumsticks", "Potatoes", "Mustard Seeds", "Garlic", "Ambula (Dry Mango)", "Turmeric", "Mustard Oil"],
+      calories: 180,
+      protein: 3.8,
+      carbs: 28.0,
+      fat: 6.0,
+      serves: "1 Person",
+      portionSize: "Portion (350ml)",
+      spiceLevel: "Medium",
+      customizations: [
+        { name: "Extra tanginess (Ambula)", price: 10 }
+      ],
+      relatedItems: ["dalma", "pakhala"]
     },
     {
       id: "pakhala",
@@ -118,7 +143,21 @@ async function main() {
       categoryId: "odia-specials",
       isVeg: true,
       isPopular: true,
-      order: 4
+      order: 4,
+      rating: 4.9,
+      ingredients: ["Fermented Rice", "Curd", "Ginger", "Roasted Cumin", "Badi", "Amaranth Leaves (Saga)", "Potatoes"],
+      calories: 450,
+      protein: 9.5,
+      carbs: 85.0,
+      fat: 7.2,
+      serves: "1 Person",
+      portionSize: "Full Platter",
+      spiceLevel: "Low",
+      customizations: [
+        { name: "Extra Curd", price: 15 },
+        { name: "Fried Fish (Non-Veg Option)", price: 60 }
+      ],
+      relatedItems: ["dalma", "chaas"]
     },
     // Thalis
     {
@@ -130,7 +169,21 @@ async function main() {
       categoryId: "thalis",
       isVeg: true,
       isPopular: true,
-      order: 5
+      order: 5,
+      rating: 4.8,
+      ingredients: ["Basmati Rice / Kanika", "Yellow Split Peas", "Seasonal Vegetables", "Tomato Khata", "Papad"],
+      calories: 610,
+      protein: 16.0,
+      carbs: 95.0,
+      fat: 10.5,
+      serves: "1 Person",
+      portionSize: "Full Meal (650g)",
+      spiceLevel: "Medium",
+      customizations: [
+        { name: "Substitute Plain Rice with Ghee Rice", price: 20 },
+        { name: "Extra Dalma", price: 30 }
+      ],
+      relatedItems: ["lassi", "chaas"]
     },
     {
       id: "chicken-thali",
@@ -168,7 +221,20 @@ async function main() {
       categoryId: "thalis",
       isVeg: true,
       isPopular: false,
-      order: 7
+      order: 7,
+      rating: 4.9,
+      ingredients: ["Ghee Rice", "Yellow Lentils", "Amaranth Leaves", "Mustard Paste", "Brinjal", "Curd", "Tomato", "Milk", "Rice", "Sugar", "Papad"],
+      calories: 820,
+      protein: 21.0,
+      carbs: 115.0,
+      fat: 22.0,
+      serves: "1-2 Persons",
+      portionSize: "Feast Platter (900g)",
+      spiceLevel: "Medium",
+      customizations: [
+        { name: "Extra Payesh (Sweet)", price: 25 }
+      ],
+      relatedItems: ["dalma", "lassi"]
     },
     // Snacks
     {
@@ -180,7 +246,21 @@ async function main() {
       categoryId: "snacks",
       isVeg: true,
       isPopular: true,
-      order: 8
+      order: 8,
+      rating: 4.7,
+      ingredients: ["Black Gram Dal (Biri)", "Yellow Peas (Ghuguni)", "Onions", "Green Chillies", "Ginger", "Refined Oil"],
+      calories: 280,
+      protein: 11.2,
+      carbs: 42.0,
+      fat: 8.5,
+      serves: "1 Person",
+      portionSize: "4 Pcs Bara + 200ml Ghuguni",
+      spiceLevel: "Medium",
+      customizations: [
+        { name: "Extra Ghuguni", price: 15 },
+        { name: "Extra Onions & Chillies", price: 0 }
+      ],
+      relatedItems: ["pakodi", "lassi"]
     },
     {
       id: "pakodi",
@@ -191,7 +271,20 @@ async function main() {
       categoryId: "snacks",
       isVeg: true,
       isPopular: false,
-      order: 9
+      order: 9,
+      rating: 4.5,
+      ingredients: ["Gram Flour (Besan)", "Onions", "Potatoes", "Cauliflower", "Spices", "Chutney"],
+      calories: 220,
+      protein: 5.4,
+      carbs: 32.0,
+      fat: 10.0,
+      serves: "1 Person",
+      portionSize: "Portion (150g)",
+      spiceLevel: "Medium",
+      customizations: [
+        { name: "Extra Chutney", price: 5 }
+      ],
+      relatedItems: ["bara-ghuguni", "chaas"]
     },
     // Beverages
     {
@@ -203,7 +296,20 @@ async function main() {
       categoryId: "beverages",
       isVeg: true,
       isPopular: false,
-      order: 10
+      order: 10,
+      rating: 4.6,
+      ingredients: ["Curd", "Water", "Coriander", "Mint", "Ginger", "Green Chillies", "Black Salt", "Roasted Cumin"],
+      calories: 75,
+      protein: 3.2,
+      carbs: 5.8,
+      fat: 2.5,
+      serves: "1 Person",
+      portionSize: "Glass (300ml)",
+      spiceLevel: "Low",
+      customizations: [
+        { name: "No Chillies", price: 0 }
+      ],
+      relatedItems: ["lassi", "veg-thali"]
     },
     {
       id: "lassi",
@@ -244,17 +350,17 @@ async function main() {
         isVeg: item.isVeg,
         isPopular: item.isPopular,
         order: item.order,
-        rating: (item as any).rating ?? 4.8,
-        ingredients: (item as any).ingredients ?? [],
-        calories: (item as any).calories ?? null,
-        protein: (item as any).protein ?? null,
-        carbs: (item as any).carbs ?? null,
-        fat: (item as any).fat ?? null,
-        serves: (item as any).serves ?? null,
-        portionSize: (item as any).portionSize ?? null,
-        spiceLevel: (item as any).spiceLevel ?? null,
-        customizations: (item as any).customizations ?? null,
-        relatedItems: (item as any).relatedItems ?? [],
+        rating: item.rating,
+        ingredients: item.ingredients,
+        calories: item.calories,
+        protein: item.protein,
+        carbs: item.carbs,
+        fat: item.fat,
+        serves: item.serves,
+        portionSize: item.portionSize,
+        spiceLevel: item.spiceLevel,
+        customizations: item.customizations,
+        relatedItems: item.relatedItems,
       },
       create: {
         id: item.id,
@@ -266,23 +372,23 @@ async function main() {
         isVeg: item.isVeg,
         isPopular: item.isPopular,
         order: item.order,
-        rating: (item as any).rating ?? 4.8,
-        ingredients: (item as any).ingredients ?? [],
-        calories: (item as any).calories ?? null,
-        protein: (item as any).protein ?? null,
-        carbs: (item as any).carbs ?? null,
-        fat: (item as any).fat ?? null,
-        serves: (item as any).serves ?? null,
-        portionSize: (item as any).portionSize ?? null,
-        spiceLevel: (item as any).spiceLevel ?? null,
-        customizations: (item as any).customizations ?? null,
-        relatedItems: (item as any).relatedItems ?? [],
+        rating: item.rating,
+        ingredients: item.ingredients,
+        calories: item.calories,
+        protein: item.protein,
+        carbs: item.carbs,
+        fat: item.fat,
+        serves: item.serves,
+        portionSize: item.portionSize,
+        spiceLevel: item.spiceLevel,
+        customizations: item.customizations,
+        relatedItems: item.relatedItems,
       }
     });
   }
   console.log("Created menu items.");
 
-  // Subscription Plans
+  // 5. Subscription Plans
   const subscriptionPlans = [
     {
       id: "student-plan",
@@ -360,7 +466,66 @@ async function main() {
   }
   console.log("Created subscription plans.");
 
-  // Reviews (approved & pinned by default for seeding to match existing layout)
+  // 6. Coupons
+  const coupons = [
+    {
+      code: "WELCOME50",
+      type: "FIXED",
+      value: 50,
+      minOrderValue: 150,
+      expiresAt: new Date("2028-12-31"),
+      active: true,
+      usageLimit: 1000,
+    },
+    {
+      code: "KAVITA10",
+      type: "PERCENTAGE",
+      value: 10,
+      minOrderValue: 200,
+      maxDiscount: 50,
+      expiresAt: new Date("2028-12-31"),
+      active: true,
+      usageLimit: 5000,
+    },
+    {
+      code: "ODIAFEAST",
+      type: "PERCENTAGE",
+      value: 20,
+      minOrderValue: 400,
+      maxDiscount: 100,
+      expiresAt: new Date("2028-12-31"),
+      active: true,
+      usageLimit: 1000,
+    }
+  ];
+
+  for (const c of coupons) {
+    await prisma.coupon.upsert({
+      where: { code: c.code },
+      update: {
+        type: c.type,
+        value: c.value,
+        minOrderValue: c.minOrderValue,
+        maxDiscount: c.maxDiscount,
+        expiresAt: c.expiresAt,
+        active: c.active,
+        usageLimit: c.usageLimit,
+      },
+      create: {
+        code: c.code,
+        type: c.type,
+        value: c.value,
+        minOrderValue: c.minOrderValue,
+        maxDiscount: c.maxDiscount,
+        expiresAt: c.expiresAt,
+        active: c.active,
+        usageLimit: c.usageLimit,
+      }
+    });
+  }
+  console.log("Created discount coupons.");
+
+  // 7. Reviews (approved & pinned by default for seeding to match existing layout)
   const reviews = [
     {
       id: "rev-1",

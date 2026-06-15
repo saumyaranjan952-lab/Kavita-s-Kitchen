@@ -21,7 +21,7 @@ export async function login(prevState: any, formData: FormData) {
   }
 
   try {
-    const user = await db.user.findUnique({
+    const user = await db.admin.findUnique({
       where: { username },
     });
 
@@ -129,7 +129,7 @@ export async function updateAdminCredentials(prevState: any, formData: FormData)
     }
 
     // Find the current user
-    const user = await db.user.findUnique({
+    const user = await db.admin.findUnique({
       where: { username: session.username },
     });
 
@@ -142,7 +142,7 @@ export async function updateAdminCredentials(prevState: any, formData: FormData)
     // If changing username
     if (newUsername !== user.username) {
       // Check if new username is already taken
-      const existingUser = await db.user.findUnique({
+      const existingUser = await db.admin.findUnique({
         where: { username: newUsername },
       });
       if (existingUser) {
@@ -171,7 +171,7 @@ export async function updateAdminCredentials(prevState: any, formData: FormData)
     }
 
     // Update DB
-    await db.user.update({
+    await db.admin.update({
       where: { id: user.id },
       data: updateData,
     });

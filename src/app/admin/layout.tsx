@@ -15,6 +15,10 @@ import {
   Menu,
   X,
   User,
+  ShoppingBag,
+  CreditCard,
+  Users,
+  Ticket
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -41,6 +45,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = [
     { label: "Overview", href: "/admin", icon: LayoutDashboard },
+    { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
+    { label: "Payments", href: "/admin/payments", icon: CreditCard },
+    { label: "Customers", href: "/admin/customers", icon: Users },
+    { label: "Coupons", href: "/admin/coupons", icon: Ticket },
     { label: "Menu Items", href: "/admin/menu", icon: Utensils },
     { label: "Categories", href: "/admin/categories", icon: Tags },
     { label: "Subscriptions", href: "/admin/subscriptions", icon: Calendar },

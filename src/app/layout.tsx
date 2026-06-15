@@ -51,8 +51,55 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FoodEstablishment",
+    "@id": "https://kavitaskitchenpuri.com/#establishment",
+    "name": "Kavita's Kitchen",
+    "image": "https://kavitaskitchenpuri.com/images/logo.jpg",
+    "url": "https://kavitaskitchenpuri.com",
+    "telephone": "+919438062973",
+    "priceRange": "₹",
+    "servesCuisine": "Odia, Indian, Homemade, Thali, Dalma",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "VIP Road, Near Jagannath Temple, Puri, Odisha",
+      "addressLocality": "Puri",
+      "addressRegion": "Odisha",
+      "postalCode": "752001",
+      "addressCountry": "IN"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 19.8135,
+      "longitude": 85.8312
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "opens": "08:00",
+      "closes": "22:30"
+    },
+    "menu": "https://kavitaskitchenpuri.com/#menu",
+    "acceptsReservations": "false"
+  };
+
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={`${playfair.variable} ${outfit.variable} font-sans antialiased bg-[var(--background)] text-[var(--foreground)]`}
       >

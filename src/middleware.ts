@@ -9,11 +9,11 @@ const JWT_SECRET = new TextEncoder().encode(
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Process /admin paths
+  // 1. Process /admin paths
   if (pathname.startsWith("/admin")) {
     const token = req.cookies.get("admin_session")?.value;
 
-    // 1. If hitting login page
+    // If hitting login page
     if (pathname === "/admin/login") {
       if (token) {
         try {
@@ -30,7 +30,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    // 2. Securing all other dashboard paths
+    // Securing all other dashboard paths
     if (!token) {
       return NextResponse.redirect(new URL("/admin/login", req.url));
     }
@@ -46,10 +46,33 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // 2. Process customer-restricted paths (/profile, /checkout)
+  if (pathname.startsWith("/profile") || pathname.startsWith("/checkout")) {
+    const token = req.cookies.get("session")?.value;
+
+    if (!token) {
+      const redirectUrl = new URL("/login", req.url);
+      redirectUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    try {
+      await jwtVerify(token, JWT_SECRET);
+      return NextResponse.next();
+    } catch (e) {
+      // Invalid session -> redirect to login and clear cookie
+      const redirectUrl = new URL("/login", req.url);
+      redirectUrl.searchParams.set("redirect", pathname);
+      const res = NextResponse.redirect(redirectUrl);
+      res.cookies.delete("session");
+      return res;
+    }
+  }
+
   return NextResponse.next();
 }
 
-// Limit the middleware to run only on /admin routes for performance
+// Limit the middleware to run on admin, profile, and checkout routes
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/profile/:path*", "/checkout/:path*"],
 };

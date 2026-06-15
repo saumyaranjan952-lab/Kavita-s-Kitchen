@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { useCart } from "@/context/CartContext";
-import { X, Plus, Minus, Trash2, ShoppingBag, Send } from "lucide-react";
+import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "./ui/Button";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/context/CartContext";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -12,43 +11,23 @@ interface CartDrawerProps {
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
-  const { cart, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
-  const [address, setAddress] = useState("");
-  const [instructions, setInstructions] = useState("");
+  const { 
+    cart, 
+    updateQuantity, 
+    removeFromCart, 
+    cartTotal, 
+    discount, 
+    tax, 
+    deliveryCharge, 
+    grandTotal, 
+    couponCode 
+  } = useCart();
+  
+  const router = useRouter();
 
-  const handleCheckout = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (cart.length === 0) return;
-
-    // Formulate a beautiful order summary text for WhatsApp
-    let messageText = `*🍽️ KAVITA'S KITCHEN - NEW ORDER REQUEST*\n`;
-    messageText += `==================================\n\n`;
-    
-    cart.forEach((item) => {
-      messageText += `• *${item.name}* \n   Quantity: x${item.quantity} | Price: ₹${item.price * item.quantity}\n`;
-    });
-
-    messageText += `\n==================================\n`;
-    messageText += `*💰 Total Amount:* ₹${cartTotal}\n\n`;
-    
-    if (address.trim()) {
-      messageText += `*📍 Delivery Address:*\n${address.trim()}\n\n`;
-    } else {
-      messageText += `*📍 Delivery Address:* (To be provided in next message)\n\n`;
-    }
-
-    if (instructions.trim()) {
-      messageText += `*📝 Special Instructions:*\n${instructions.trim()}\n\n`;
-    }
-
-    messageText += `Please confirm my order and estimate delivery time. Thank you!`;
-
-    const encodedText = encodeURIComponent(messageText);
-    window.open(`https://wa.me/917848037181?text=${encodedText}`, "_blank");
-
-    // Optional: clear the cart on successful checkout
-    clearCart();
+  const handleCheckoutRedirect = () => {
     onClose();
+    router.push("/checkout");
   };
 
   return (
@@ -164,62 +143,47 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
               )}
             </div>
 
-            {/* Checkout Form */}
+            {/* Subtotals & Pay */}
             {cart.length > 0 && (
-              <form
-                onSubmit={handleCheckout}
-                className="p-5 border-t border-[var(--card-border)] bg-[var(--card-bg)] space-y-4 text-left"
-              >
-                {/* Inputs */}
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-brand-gold mb-1">
-                      Delivery Address
-                    </label>
-                    <textarea
-                      placeholder="Enter full delivery address in Puri..."
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      required
-                      className="w-full text-sm p-3 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none focus:ring-2 focus:ring-brand-gold/60 focus:border-brand-gold transition-all duration-300 font-semibold resize-none h-16"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-brand-gold mb-1">
-                      Cooking/Delivery Instructions (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g., Less spicy, deliver by 1:00 PM..."
-                      value={instructions}
-                      onChange={(e) => setInstructions(e.target.value)}
-                      className="w-full text-sm px-3 py-2 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none focus:ring-2 focus:ring-brand-gold/60 focus:border-brand-gold transition-all duration-300 font-semibold"
-                    />
-                  </div>
-                </div>
-
-                {/* Subtotals & Pay */}
-                <div className="pt-2 space-y-3">
-                  <div className="flex items-center justify-between border-t border-[var(--card-border)]/60 pt-3 font-semibold text-brand-green dark:text-brand-cream">
+              <div className="p-5 border-t border-[var(--card-border)] bg-[var(--card-bg)] space-y-4 text-left">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm font-semibold text-brand-green/80 dark:text-brand-cream/80">
                     <span>Subtotal</span>
                     <span className="font-serif">₹{cartTotal}</span>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-brand-green/60 dark:text-brand-cream/60 font-semibold">
-                    <span>Delivery Charge</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 uppercase font-bold">FREE Delivery</span>
+                  
+                  {discount > 0 && (
+                    <div className="flex items-center justify-between text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span>Discount {couponCode ? `(${couponCode})` : ""}</span>
+                      <span className="font-serif">-₹{discount}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-sm font-semibold text-brand-green/80 dark:text-brand-cream/80">
+                    <span>Delivery Charges</span>
+                    {deliveryCharge === 0 ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 uppercase font-bold text-xs">FREE</span>
+                    ) : (
+                      <span className="font-serif">₹{deliveryCharge}</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm font-semibold text-brand-green/80 dark:text-brand-cream/80">
+                    <span>Taxes (5% GST)</span>
+                    <span className="font-serif">₹{tax}</span>
                   </div>
                   
                   <div className="flex items-center justify-between border-t border-brand-gold/20 pt-3 font-serif text-lg font-black text-brand-green dark:text-brand-cream">
                     <span>Grand Total</span>
-                    <span className="text-brand-gold font-extrabold">₹{cartTotal}</span>
+                    <span className="text-brand-gold font-extrabold">₹{grandTotal}</span>
                   </div>
-
-                  <Button variant="gold" fullWidth size="lg" type="submit" shimmer>
-                    <Send className="w-4 h-4 mr-2" />
-                    Place Order via WhatsApp
-                  </Button>
                 </div>
-              </form>
+
+                <Button variant="gold" fullWidth size="lg" onClick={handleCheckoutRedirect} shimmer>
+                  Proceed to Checkout
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
             )}
           </motion.div>
         </>

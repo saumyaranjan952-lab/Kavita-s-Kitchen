@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import { X, User, Calendar, ShieldCheck, MessageSquare, PhoneCall } from "lucide-react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 type SubscriptionPlan = {
   id: string;
@@ -31,6 +32,7 @@ export const SubscriptionsOverlay: React.FC<SubscriptionsOverlayProps> = ({
   phone = "+91 78480 37181"
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Lock body scroll when overlay is open
   useEffect(() => {
@@ -62,12 +64,9 @@ export const SubscriptionsOverlay: React.FC<SubscriptionsOverlayProps> = ({
     }
   };
 
-  const handleSubscribe = (planName: string, billingCycle: "weekly" | "monthly", price: number) => {
-    const cycleText = billingCycle === "weekly" ? "Weekly" : "Monthly";
-    const text = encodeURIComponent(
-      `Hello Kavita's Kitchen, I am interested in subscribing to the "${planName}" on a ${cycleText} basis (Price: ₹${price}). Please share details.`
-    );
-    window.open(`https://wa.me/${whatsApp}?text=${text}`, "_blank");
+  const handleSubscribe = (planId: string, billingCycle: "weekly" | "monthly") => {
+    onClose();
+    router.push(`/subscribe/${planId}?cycle=${billingCycle}`);
   };
 
   const handleGeneralInquiry = () => {
@@ -192,13 +191,13 @@ export const SubscriptionsOverlay: React.FC<SubscriptionsOverlayProps> = ({
                       {/* Subscribe actions */}
                       <div className="grid grid-cols-2 gap-2 pt-1">
                         <button
-                          onClick={() => handleSubscribe(plan.name, "weekly", plan.weeklyPrice)}
+                          onClick={() => handleSubscribe(plan.id, "weekly")}
                           className="py-2 px-3 bg-brand-cream/10 hover:bg-brand-cream/20 text-brand-cream border border-brand-cream/25 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300 cursor-pointer shadow-sm text-center"
                         >
                           Weekly Sub
                         </button>
                         <button
-                          onClick={() => handleSubscribe(plan.name, "monthly", plan.monthlyPrice)}
+                          onClick={() => handleSubscribe(plan.id, "monthly")}
                           className="py-2 px-3 bg-brand-gold hover:bg-brand-gold-light text-brand-green-dark rounded-xl text-[10px] sm:text-xs font-black transition-all duration-300 cursor-pointer shadow-sm text-center"
                         >
                           Monthly Sub

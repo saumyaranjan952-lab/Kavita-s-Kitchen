@@ -7,13 +7,50 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id           String   @id @default(uuid())
-  username     String   @unique
+model Admin {
+  id           String        @id @default(uuid())
+  username     String        @unique
   passwordHash String
-  role         String   @default("ADMIN")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  role         String        @default("ADMIN")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  activityLogs ActivityLog[]
+}
+
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  phone             String?
+  name              String
+  passwordHash      String
+  isVerified        Boolean        @default(false)
+  verificationToken String?
+  resetToken        String?
+  resetTokenExpires DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  orders            Order[]
+  addresses         Address[]
+  reviews           Review[]
+  subscriptions     Subscription[]
+  notifications     Notification[]
+  favorites         FavoriteDish[]
+}
+
+model Address {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipientName String
+  phone         String
+  street        String
+  city          String   @default("Puri")
+  state         String   @default("Odisha")
+  postalCode    String
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Category {
@@ -50,8 +87,23 @@ model MenuItem {
   serves        String?
   portionSize   String?
   spiceLevel    String?
-  customizations Json?   // Stored as JSON array of [{ name: string, price: number }]
+  customizations Json?   // [{ name: string, price: number }]
   relatedItems  String[] @default([])
+
+  orderItems    OrderItem[]
+  reviews       Review[]
+  favoritedBy   FavoriteDish[]
+}
+
+model FavoriteDish {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, menuItemId])
 }
 
 model SubscriptionPlan {
@@ -61,19 +113,104 @@ model SubscriptionPlan {
   weeklyPrice  Float
   monthlyPrice Float
   image        String
-  features     String // Stored as JSON string
+  features     String // JSON string
   type         String // student, office, family
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id           String           @id @default(uuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId       String
+  plan         SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  type         String           // weekly or monthly
+  status       String           @default("ACTIVE") // ACTIVE, CANCELLED, EXPIRED
+  startDate    DateTime         @default(now())
+  endDate      DateTime
+  amountPaid   Float
+  paymentMethod String
+  deliveryTime String           // e.g. "Lunch (12:30 PM - 1:30 PM)" or "Dinner (7:30 PM - 8:30 PM)"
+  address      String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model Order {
+  id             String      @id @default(uuid())
+  orderId        String      @unique // KK-XXXXXX format
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status         String      @default("PENDING") // PENDING, CONFIRMED, PREPARING, OUT_FOR_DELIVERY, DELIVERED, CANCELLED, REFUNDED
+  subtotal       Float
+  deliveryCharge Float
+  tax            Float
+  discount       Float       @default(0)
+  total          Float
+  couponCode     String?
+  paymentMethod  String      // RAZORPAY, UPI, G_PAY, PHONEPE, PAYTM, COD
+  paymentStatus  String      @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  deliveryAddress String
+  instructions   String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  orderItems     OrderItem[]
+  payments       Payment[]
+}
+
+model OrderItem {
+  id             String   @id @default(uuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId     String
+  menuItem       MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  name           String
+  price          Float
+  quantity       Int
+  customizations Json?    // Stored as JSON array
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  transactionId  String   @unique
+  method         String   // RAZORPAY, UPI, G_PAY, PHONEPE, PAYTM, COD
+  status         String   // SUCCESS, FAILED, REFUNDED
+  amount         Float
+  refundDetails  String?  // JSON string for refund details if any
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Review {
-  id       String  @id
-  name     String
-  rating   Int
-  text     String
-  location String
-  date     String
-  approved Boolean @default(false)
-  isPinned Boolean @default(false)
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  menuItemId String?
+  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  name       String
+  rating     Int
+  text       String
+  location   String
+  image      String?  // Optional review photo URL
+  date       String
+  approved   Boolean  @default(false)
+  isPinned   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Coupon {
+  id            String    @id @default(uuid())
+  code          String    @unique
+  type          String    // PERCENTAGE, FIXED
+  value         Float
+  minOrderValue Float     @default(0)
+  maxDiscount   Float?
+  expiresAt     DateTime
+  active        Boolean   @default(true)
+  usageLimit    Int?
+  usageCount    Int       @default(0)
 }
 
 model BusinessConfig {
@@ -90,7 +227,19 @@ model BusinessConfig {
 model ActivityLog {
   id        String   @id @default(uuid())
   adminName String
+  admin     Admin?   @relation(fields: [adminName], references: [username], onDelete: SetNull)
   action    String
   details   String
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?  // If null, it is an admin notification
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  type      String   // CUSTOMER_ORDER, ADMIN_ALERT, SYSTEM
   createdAt DateTime @default(now())
 }

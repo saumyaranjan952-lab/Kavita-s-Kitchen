@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { ThemeToggle } from "./ui/ThemeToggle";
-import { ShoppingCart, Menu, X, PhoneCall } from "lucide-react";
+import { ShoppingCart, Menu, X, PhoneCall, User, ChevronDown, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { checkCustomerSession, customerLogout } from "@/lib/actions/customerAuth";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Category = {
   id: string;
@@ -57,6 +60,29 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { cartCount } = useCart();
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+
+  // Customer session state
+  const [customer, setCustomer] = useState<{ name: string; email: string } | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    checkCustomerSession().then((user) => {
+      if (user) {
+        setCustomer({ name: user.name, email: user.email });
+      }
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    const res = await customerLogout();
+    if (res.success) {
+      setCustomer(null);
+      setShowDropdown(false);
+      router.push("/");
+      router.refresh();
+    }
+  };
 
   const navLinks = [
     { label: "Home", href: "#home" },
@@ -71,6 +97,13 @@ export const Header: React.FC<HeaderProps> = ({
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     setIsOpen(false);
+    
+    // Check if we are currently not on the homepage
+    if (window.location.pathname !== "/") {
+      router.push("/" + href);
+      return;
+    }
+
     if (href === "#menu" && onMenuOpen) {
       onMenuOpen();
       return;
@@ -90,7 +123,10 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-40 w-full bg-[var(--card-bg)]/90 backdrop-blur-md border-b border-[var(--card-border)] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        <Logo />
+        
+        <Link href="/">
+          <Logo />
+        </Link>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">
@@ -131,6 +167,70 @@ export const Header: React.FC<HeaderProps> = ({
             </AnimatePresence>
           </button>
 
+          {/* Customer Profile / Dropdown */}
+          <div className="relative">
+            {customer ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="flex items-center gap-1.5 p-2 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream hover:text-brand-gold hover:border-brand-gold transition-all duration-300 cursor-pointer focus:outline-none select-none text-xs font-bold"
+                >
+                  <div className="w-6 h-6 rounded-full bg-brand-gold text-brand-green-dark flex items-center justify-center font-extrabold text-[11px]">
+                    {customer.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hidden sm:inline max-w-[80px] truncate">{customer.name.split(" ")[0]}</span>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+
+                {showDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(false)} />
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-20 py-2 text-left transition-colors duration-300">
+                      <div className="px-4 py-2 border-b border-gray-100 dark:border-zinc-800">
+                        <p className="text-[10px] text-brand-gold font-bold uppercase">Logged in as</p>
+                        <p className="text-xs font-bold text-brand-green dark:text-brand-cream truncate mt-0.5">{customer.name}</p>
+                      </div>
+                      <Link
+                        href="/profile"
+                        onClick={() => setShowDropdown(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-brand-green dark:text-brand-cream hover:bg-gray-50 dark:hover:bg-zinc-800/60 hover:text-brand-gold"
+                      >
+                        <User className="w-4 h-4" />
+                        My Profile
+                      </Link>
+                      <Link
+                        href="/profile?tab=orders"
+                        onClick={() => {
+                          setShowDropdown(false);
+                          router.push("/profile");
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-brand-green dark:text-brand-cream hover:bg-gray-50 dark:hover:bg-zinc-800/60 hover:text-brand-gold"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        My Orders
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 w-full px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 text-left border-t border-gray-100 dark:border-zinc-800 mt-1.5 pt-2 cursor-pointer focus:outline-none"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden sm:flex items-center gap-1.5 px-4 py-2 border-2 border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-green-dark rounded-full text-xs font-bold tracking-wide transition-all duration-300 shadow-sm"
+              >
+                <User className="w-3.5 h-3.5 stroke-[2.5px]" />
+                Sign In
+              </Link>
+            )}
+          </div>
+
           {/* Call Button (Mobile Shortcut) */}
           <a
             href={`tel:${cleanPhone}`}
@@ -161,7 +261,7 @@ export const Header: React.FC<HeaderProps> = ({
             transition={{ duration: 0.3 }}
             className="md:hidden border-t border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden"
           >
-            <div className="px-4 py-6 space-y-4 flex flex-col">
+            <div className="px-4 py-6 space-y-4 flex flex-col text-left">
               {navLinks.map((link) => (
                 <a
                   key={link.label}
@@ -172,6 +272,16 @@ export const Header: React.FC<HeaderProps> = ({
                   {link.label}
                 </a>
               ))}
+              {!customer && (
+                <Link
+                  href="/login"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex justify-center items-center gap-1.5 px-4 py-2.5 border-2 border-brand-gold text-brand-gold rounded-full text-sm font-bold tracking-wide"
+                >
+                  <User className="w-4 h-4" />
+                  Sign In
+                </Link>
+              )}
             </div>
           </motion.div>
         )}

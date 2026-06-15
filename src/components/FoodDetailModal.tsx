@@ -1,9 +1,10 @@
-"use client";
-
 import React, { useState, useEffect, useRef } from "react";
 import { useCart } from "@/context/CartContext";
 import { X, Star, Flame, Users, Sparkles, ShoppingBag, Send, Check, Info, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getDishReviews, submitDishReview } from "@/lib/actions/reviews";
+import { checkCustomerSession } from "@/lib/actions/customerAuth";
+import { Button } from "@/components/ui/Button";
 
 type CustomizationOption = {
   name: string;
@@ -59,6 +60,70 @@ export const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
   const { addToCart } = useCart();
   const [selectedCustomizations, setSelectedCustomizations] = useState<CustomizationOption[]>([]);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Dynamic review states
+  const [reviewsList, setReviewsList] = useState<any[]>([]);
+  const [sessionUser, setSessionUser] = useState<any>(null);
+  
+  // Review form inputs
+  const [reviewText, setReviewText] = useState("");
+  const [ratingVal, setRatingVal] = useState(5);
+  const [custName, setCustName] = useState("");
+  const [custLoc, setCustLoc] = useState("");
+  
+  const [submitting, setSubmitting] = useState(false);
+  const [submittedSuccess, setSubmittedSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  // Load dynamic reviews for this item
+  useEffect(() => {
+    if (item?.id) {
+      getDishReviews(item.id).then((res) => {
+        setReviewsList(res);
+      });
+      checkCustomerSession().then((user) => {
+        setSessionUser(user);
+        if (user) {
+          setCustName(user.name);
+        }
+      });
+      // Reset form states
+      setReviewText("");
+      setRatingVal(5);
+      setSubmittedSuccess(false);
+      setSubmitError("");
+    }
+  }, [item?.id]);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!item?.id) return;
+    setSubmitError("");
+    setSubmittedSuccess(false);
+
+    if (!reviewText.trim()) {
+      setSubmitError("Please write a review comment.");
+      return;
+    }
+
+    setSubmitting(true);
+    const res = await submitDishReview(
+      item.id,
+      ratingVal,
+      reviewText,
+      sessionUser ? sessionUser.name : custName,
+      custLoc || "Puri"
+    );
+    setSubmitting(false);
+
+    if (res.success) {
+      setSubmittedSuccess(true);
+      setReviewText("");
+      setCustLoc("");
+    } else {
+      setSubmitError(res.error || "Failed to submit review.");
+    }
+  };
 
   // Parse customizations array if it is a JSON string or already parsed array
   const customizationsList: CustomizationOption[] = React.useMemo(() => {
@@ -404,36 +469,112 @@ export const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
               </div>
             )}
 
-            {/* Customer Reviews Static Stack */}
-            <div className="space-y-3.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-brand-gold">Customer Reviews</h4>
+            {/* Dynamic Customer Reviews */}
+            <div className="space-y-4 pt-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-brand-gold">Customer Reviews ({reviewsList.length})</h4>
+              
               <div className="space-y-3">
-                <div className="p-4 bg-white/40 dark:bg-zinc-900/50 border border-gray-200/55 dark:border-zinc-800/50 rounded-2xl shadow-sm text-xs sm:text-sm text-left relative">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-extrabold text-brand-green dark:text-brand-cream">Smaranika J.</span>
-                    <span className="flex items-center gap-0.5 text-amber-500 font-bold text-xs">
-                      <Star className="w-3 h-3 fill-current" />
-                      5.0
-                    </span>
+                {reviewsList.map((rev) => (
+                  <div key={rev.id} className="p-4 bg-white/40 dark:bg-zinc-900/50 border border-gray-200/55 dark:border-zinc-800/50 rounded-2xl shadow-sm text-xs sm:text-sm text-left relative transition-colors duration-300">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-extrabold text-brand-green dark:text-brand-cream">{rev.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">{rev.location}</span>
+                        <span className="flex items-center gap-0.5 text-amber-500 font-bold text-xs">
+                          <Star className="w-3 h-3 fill-current" />
+                          {rev.rating.toFixed(1)}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed font-semibold italic">
+                      &ldquo;{rev.text}&rdquo;
+                    </p>
+                    <span className="text-[9px] text-gray-400 font-medium block mt-1.5">{rev.date}</span>
                   </div>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed font-semibold italic">
-                    "Authentic homemade taste, reminds me of my grandmother's cooking in Puri!"
+                ))}
+
+                {reviewsList.length === 0 && (
+                  <p className="text-xs text-brand-green/50 dark:text-brand-cream/50 font-bold py-2 italic">
+                    No reviews for this dish yet. Be the first to rate it!
                   </p>
+                )}
+              </div>
+
+              {/* Leave a review form */}
+              <form onSubmit={handleReviewSubmit} className="p-5 bg-gray-50 dark:bg-zinc-950 border border-gray-100 dark:border-zinc-850 rounded-2xl space-y-3 mt-4 text-left">
+                <h5 className="text-xs font-bold uppercase text-brand-gold">Rate this Dish</h5>
+                
+                {!sessionUser && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Your Name"
+                      required
+                      value={custName}
+                      onChange={(e) => setCustName(e.target.value)}
+                      className="text-xs p-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Location (e.g. Puri)"
+                      value={custLoc}
+                      onChange={(e) => setCustLoc(e.target.value)}
+                      className="text-xs p-2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream"
+                    />
+                  </div>
+                )}
+
+                {sessionUser && (
+                  <div className="flex justify-between items-center text-xs font-bold text-brand-green/80 dark:text-brand-cream/80">
+                    <span>Reviewing as: <strong className="text-brand-gold">{sessionUser.name}</strong></span>
+                    <input
+                      type="text"
+                      placeholder="Your Location (Puri)"
+                      value={custLoc}
+                      onChange={(e) => setCustLoc(e.target.value)}
+                      className="text-[10px] px-2 py-1 max-w-[120px] rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream font-bold"
+                    />
+                  </div>
+                )}
+
+                {/* Stars selection */}
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-bold text-brand-green/60 dark:text-brand-cream/60 mr-2 uppercase">Rating:</span>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRatingVal(star)}
+                      className="text-amber-500 focus:outline-none cursor-pointer"
+                    >
+                      <Star className={`w-5 h-5 ${star <= ratingVal ? "fill-current" : "text-gray-300 dark:text-zinc-700"}`} />
+                    </button>
+                  ))}
                 </div>
 
-                <div className="p-4 bg-white/40 dark:bg-zinc-900/50 border border-gray-200/55 dark:border-zinc-800/50 rounded-2xl shadow-sm text-xs sm:text-sm text-left relative">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-extrabold text-brand-green dark:text-brand-cream">Amit M.</span>
-                    <span className="flex items-center gap-0.5 text-amber-500 font-bold text-xs">
-                      <Star className="w-3 h-3 fill-current" />
-                      5.0
-                    </span>
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed font-semibold italic">
-                    "Freshly cooked, highly hygienic, and pricing is absolutely spot on!"
+                {/* Comment box */}
+                <textarea
+                  placeholder="Share your thoughts about this dish..."
+                  required
+                  rows={2}
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  className="w-full text-xs p-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none resize-none font-semibold"
+                />
+
+                {submittedSuccess && (
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">
+                    Review submitted successfully! It will appear after moderation approval.
                   </p>
+                )}
+                {submitError && <p className="text-xs text-red-500 font-bold">{submitError}</p>}
+
+                <div className="flex justify-end pt-1">
+                  <Button variant="gold" size="xs" type="submit" disabled={submitting} shimmer>
+                    {submitting ? "Submitting..." : "Submit Review"}
+                  </Button>
                 </div>
-              </div>
+              </form>
             </div>
 
             {/* Related Items ("You May Also Like") */}
