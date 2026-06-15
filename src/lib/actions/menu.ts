@@ -117,6 +117,18 @@ export type MenuItemInput = {
   availability: string;
   categoryId: string;
   order?: number;
+
+  rating?: number;
+  ingredients?: string[];
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  serves?: string;
+  portionSize?: string;
+  spiceLevel?: string;
+  customizations?: any;
+  relatedItems?: string[];
 };
 
 export async function createMenuItem(input: MenuItemInput) {
@@ -151,6 +163,17 @@ export async function createMenuItem(input: MenuItemInput) {
         availability: input.availability,
         categoryId: input.categoryId,
         order: input.order || 0,
+        rating: input.rating !== undefined ? Number(input.rating) : null,
+        ingredients: input.ingredients || [],
+        calories: input.calories ? Number(input.calories) : null,
+        protein: input.protein ? Number(input.protein) : null,
+        carbs: input.carbs ? Number(input.carbs) : null,
+        fat: input.fat ? Number(input.fat) : null,
+        serves: input.serves || null,
+        portionSize: input.portionSize || null,
+        spiceLevel: input.spiceLevel || null,
+        customizations: input.customizations || null,
+        relatedItems: input.relatedItems || [],
       },
     });
 
@@ -188,6 +211,17 @@ export async function updateMenuItem(id: string, input: MenuItemInput) {
         availability: input.availability,
         categoryId: input.categoryId,
         order: input.order ?? 0,
+        rating: input.rating !== undefined ? Number(input.rating) : null,
+        ingredients: input.ingredients || [],
+        calories: input.calories ? Number(input.calories) : null,
+        protein: input.protein ? Number(input.protein) : null,
+        carbs: input.carbs ? Number(input.carbs) : null,
+        fat: input.fat ? Number(input.fat) : null,
+        serves: input.serves || null,
+        portionSize: input.portionSize || null,
+        spiceLevel: input.spiceLevel || null,
+        customizations: input.customizations || null,
+        relatedItems: input.relatedItems || [],
       },
     });
 

@@ -29,6 +29,18 @@ type MenuItem = {
   availability: string;
   categoryId: string;
   order: number;
+
+  rating?: number | null;
+  ingredients?: string[];
+  calories?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fat?: number | null;
+  serves?: string | null;
+  portionSize?: string | null;
+  spiceLevel?: string | null;
+  customizations?: any;
+  relatedItems?: string[];
 };
 
 interface MenuClientProps {
@@ -63,6 +75,19 @@ export default function MenuClient({ initialCategories, initialMenuItems }: Menu
   const [formIsBestSeller, setFormIsBestSeller] = useState(false);
   const [formAvailability, setFormAvailability] = useState("AVAILABLE");
   const [formOrder, setFormOrder] = useState("0");
+
+  // New detailed states
+  const [formRating, setFormRating] = useState("4.8");
+  const [formIngredients, setFormIngredients] = useState("");
+  const [formCalories, setFormCalories] = useState("");
+  const [formProtein, setFormProtein] = useState("");
+  const [formCarbs, setFormCarbs] = useState("");
+  const [formFat, setFormFat] = useState("");
+  const [formServes, setFormServes] = useState("");
+  const [formPortionSize, setFormPortionSize] = useState("");
+  const [formSpiceLevel, setFormSpiceLevel] = useState("Medium");
+  const [formCustomizations, setFormCustomizations] = useState("");
+  const [formRelatedItems, setFormRelatedItems] = useState<string[]>([]);
 
   const [uploading, setUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -162,6 +187,17 @@ export default function MenuClient({ initialCategories, initialMenuItems }: Menu
     setFormIsBestSeller(false);
     setFormAvailability("AVAILABLE");
     setFormOrder("0");
+    setFormRating("4.8");
+    setFormIngredients("");
+    setFormCalories("");
+    setFormProtein("");
+    setFormCarbs("");
+    setFormFat("");
+    setFormServes("");
+    setFormPortionSize("");
+    setFormSpiceLevel("Medium");
+    setFormCustomizations("");
+    setFormRelatedItems([]);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -181,6 +217,29 @@ export default function MenuClient({ initialCategories, initialMenuItems }: Menu
     setFormIsBestSeller(item.isBestSeller);
     setFormAvailability(item.availability);
     setFormOrder(String(item.order));
+    setFormRating(item.rating ? String(item.rating) : "4.8");
+    setFormIngredients(item.ingredients ? item.ingredients.join(", ") : "");
+    setFormCalories(item.calories ? String(item.calories) : "");
+    setFormProtein(item.protein ? String(item.protein) : "");
+    setFormCarbs(item.carbs ? String(item.carbs) : "");
+    setFormFat(item.fat ? String(item.fat) : "");
+    setFormServes(item.serves || "");
+    setFormPortionSize(item.portionSize || "");
+    setFormSpiceLevel(item.spiceLevel || "Medium");
+
+    let customizationsText = "";
+    if (item.customizations) {
+      try {
+        const parsed = typeof item.customizations === "string" ? JSON.parse(item.customizations) : item.customizations;
+        if (Array.isArray(parsed)) {
+          customizationsText = parsed.map(c => `${c.name}: ${c.price}`).join("\n");
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setFormCustomizations(customizationsText);
+    setFormRelatedItems(item.relatedItems || []);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -200,6 +259,29 @@ export default function MenuClient({ initialCategories, initialMenuItems }: Menu
     setFormIsBestSeller(item.isBestSeller);
     setFormAvailability(item.availability);
     setFormOrder(String(item.order + 1));
+    setFormRating(item.rating ? String(item.rating) : "4.8");
+    setFormIngredients(item.ingredients ? item.ingredients.join(", ") : "");
+    setFormCalories(item.calories ? String(item.calories) : "");
+    setFormProtein(item.protein ? String(item.protein) : "");
+    setFormCarbs(item.carbs ? String(item.carbs) : "");
+    setFormFat(item.fat ? String(item.fat) : "");
+    setFormServes(item.serves || "");
+    setFormPortionSize(item.portionSize || "");
+    setFormSpiceLevel(item.spiceLevel || "Medium");
+
+    let customizationsText = "";
+    if (item.customizations) {
+      try {
+        const parsed = typeof item.customizations === "string" ? JSON.parse(item.customizations) : item.customizations;
+        if (Array.isArray(parsed)) {
+          customizationsText = parsed.map(c => `${c.name}: ${c.price}`).join("\n");
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setFormCustomizations(customizationsText);
+    setFormRelatedItems(item.relatedItems || []);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -212,6 +294,28 @@ export default function MenuClient({ initialCategories, initialMenuItems }: Menu
       setErrorMsg("Please fill in all required fields and upload an image.");
       return;
     }
+
+    const parsedCustomizations: any[] = [];
+    if (formCustomizations.trim()) {
+      const lines = formCustomizations.split("\n");
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const parts = line.split(":");
+        const name = parts[0]?.trim();
+        let price = Number(parts[1]?.trim() || 0);
+        if (isNaN(price)) {
+          price = 0;
+        }
+        if (name) {
+          parsedCustomizations.push({ name, price });
+        }
+      }
+    }
+
+    const parsedIngredients = formIngredients
+      .split(",")
+      .map(i => i.trim())
+      .filter(i => i !== "");
 
     const payload = {
       name: formName,
@@ -227,6 +331,17 @@ export default function MenuClient({ initialCategories, initialMenuItems }: Menu
       availability: formAvailability,
       categoryId: formCategoryId,
       order: Number(formOrder),
+      rating: formRating ? Number(formRating) : undefined,
+      ingredients: parsedIngredients,
+      calories: formCalories ? Number(formCalories) : undefined,
+      protein: formProtein ? Number(formProtein) : undefined,
+      carbs: formCarbs ? Number(formCarbs) : undefined,
+      fat: formFat ? Number(formFat) : undefined,
+      serves: formServes || undefined,
+      portionSize: formPortionSize || undefined,
+      spiceLevel: formSpiceLevel || undefined,
+      customizations: parsedCustomizations.length > 0 ? parsedCustomizations : undefined,
+      relatedItems: formRelatedItems,
     };
 
     startTransition(async () => {
@@ -681,6 +796,182 @@ export default function MenuClient({ initialCategories, initialMenuItems }: Menu
                   />
                   <span>Best Seller</span>
                 </label>
+              </div>
+
+              {/* Rich detail experience fields */}
+              <div className="pt-4 border-t border-gray-100 dark:border-zinc-800/60 space-y-4">
+                <h4 className="font-serif text-sm font-extrabold text-[#0f3d2e] dark:text-[#FCFAF2] border-b border-gray-100 dark:border-zinc-800 pb-1.5">
+                  Swiggy / Zomato Detailed Settings
+                </h4>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                      Rating (1.0 to 5.0)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="1"
+                      max="5"
+                      value={formRating}
+                      onChange={(e) => setFormRating(e.target.value)}
+                      placeholder="4.8"
+                      className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-zinc-800 rounded-xl bg-gray-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] font-semibold text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                      Spice Level
+                    </label>
+                    <select
+                      value={formSpiceLevel}
+                      onChange={(e) => setFormSpiceLevel(e.target.value)}
+                      className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-zinc-800 rounded-xl bg-gray-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] font-bold text-sm cursor-pointer text-gray-600 dark:text-gray-300"
+                    >
+                      <option value="None">None / Sweet</option>
+                      <option value="Low">Low Spice</option>
+                      <option value="Medium">Medium Spice</option>
+                      <option value="High">High Spice</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                    Ingredients (Comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={formIngredients}
+                    onChange={(e) => setFormIngredients(e.target.value)}
+                    placeholder="e.g. Fresh Chicken, Onion, Tomato, Mustard Oil"
+                    className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-zinc-800 rounded-xl bg-gray-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] font-semibold text-sm"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                      Serves (e.g. 1 Person)
+                    </label>
+                    <input
+                      type="text"
+                      value={formServes}
+                      onChange={(e) => setFormServes(e.target.value)}
+                      placeholder="e.g. 1 Person, 2 Persons"
+                      className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-zinc-800 rounded-xl bg-gray-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] font-semibold text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                      Portion Size (e.g. 500ml)
+                    </label>
+                    <input
+                      type="text"
+                      value={formPortionSize}
+                      onChange={(e) => setFormPortionSize(e.target.value)}
+                      placeholder="e.g. 500ml, 4 pcs"
+                      className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-zinc-800 rounded-xl bg-gray-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] font-semibold text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Nutrition info */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">
+                    Nutrition Data (Optional)
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    <div>
+                      <input
+                        type="number"
+                        value={formCalories}
+                        onChange={(e) => setFormCalories(e.target.value)}
+                        placeholder="Calories"
+                        className="w-full px-2.5 py-2 border border-gray-200 dark:border-zinc-800 rounded-xl bg-gray-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] font-semibold text-xs text-center"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formProtein}
+                        onChange={(e) => setFormProtein(e.target.value)}
+                        placeholder="Protein (g)"
+                        className="w-full px-2.5 py-2 border border-gray-200 dark:border-zinc-800 rounded-xl bg-gray-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] font-semibold text-xs text-center"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formCarbs}
+                        onChange={(e) => setFormCarbs(e.target.value)}
+                        placeholder="Carbs (g)"
+                        className="w-full px-2.5 py-2 border border-gray-200 dark:border-zinc-800 rounded-xl bg-gray-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] font-semibold text-xs text-center"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formFat}
+                        onChange={(e) => setFormFat(e.target.value)}
+                        placeholder="Fat (g)"
+                        className="w-full px-2.5 py-2 border border-gray-200 dark:border-zinc-800 rounded-xl bg-gray-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] font-semibold text-xs text-center"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customizations */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                    Customization Options (Format option: price, one per line)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formCustomizations}
+                    onChange={(e) => setFormCustomizations(e.target.value)}
+                    placeholder="e.g.&#10;Extra Rice: 20&#10;Extra Salad: 10&#10;Extra Gravy: 15"
+                    className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-zinc-800 rounded-xl bg-gray-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] font-semibold text-sm"
+                  />
+                </div>
+
+                {/* Related Dishes */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                    Related Dishes ("You May Also Like")
+                  </label>
+                  <div className="max-h-36 overflow-y-auto border border-gray-200 dark:border-zinc-800 rounded-xl p-3 bg-gray-50 dark:bg-zinc-950 space-y-2">
+                    {menuItems
+                      .filter((m) => !editingItem || m.id !== editingItem.id)
+                      .map((m) => {
+                        const isChecked = formRelatedItems.includes(m.id);
+                        return (
+                          <label key={m.id} className="flex items-center gap-2 text-xs font-bold text-gray-500 dark:text-zinc-400 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                setFormRelatedItems((prev) =>
+                                  isChecked ? prev.filter((id) => id !== m.id) : [...prev, m.id]
+                                );
+                              }}
+                              className="w-4 h-4 rounded text-[#D4AF37] border-gray-300 focus:ring-[#D4AF37] cursor-pointer"
+                            />
+                            <span>{m.name} ({categories.find(c => c.id === m.categoryId)?.name})</span>
+                          </label>
+                        );
+                      })}
+                    {menuItems.filter((m) => !editingItem || m.id !== editingItem.id).length === 0 && (
+                      <p className="text-xs text-gray-400">No other dishes available to link.</p>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Modal Buttons */}

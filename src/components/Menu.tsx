@@ -5,6 +5,7 @@ import { useCart } from "@/context/CartContext";
 import { Card, CardContent } from "./ui/Card";
 import { Plus, Minus, Search, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FoodDetailModal } from "./FoodDetailModal";
 
 type Category = {
   id: string;
@@ -25,18 +26,32 @@ type MenuItem = {
   isBestSeller: boolean;
   availability: string;
   categoryId: string;
+  
+  rating?: number | null;
+  ingredients?: string[];
+  calories?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fat?: number | null;
+  serves?: string | null;
+  portionSize?: string | null;
+  spiceLevel?: string | null;
+  customizations?: any;
+  relatedItems?: string[];
 };
 
 interface MenuProps {
   categories: Category[];
   menuItems: MenuItem[];
+  onCartOpen?: () => void;
 }
 
-export const Menu: React.FC<MenuProps> = ({ categories, menuItems }) => {
+export const Menu: React.FC<MenuProps> = ({ categories, menuItems, onCartOpen }) => {
   const { cart, addToCart, updateQuantity } = useCart();
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "odia-specials");
   const [searchQuery, setSearchQuery] = useState("");
   const [vegOnly, setVegOnly] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
   // Filter items based on active category tab, search input, and veg switch
   const filteredItems = menuItems.filter((item) => {
@@ -131,7 +146,7 @@ export const Menu: React.FC<MenuProps> = ({ categories, menuItems }) => {
                   <Card className="flex flex-col h-full relative group">
                     
                     {/* Item Image */}
-                    <div className="relative h-52 w-full overflow-hidden">
+                    <div onClick={() => setSelectedItem(item)} className="relative h-52 w-full overflow-hidden cursor-pointer">
                       <img
                         src={item.image}
                         alt={item.name}
@@ -158,18 +173,20 @@ export const Menu: React.FC<MenuProps> = ({ categories, menuItems }) => {
 
                     {/* Content */}
                     <CardContent className="flex flex-col flex-grow p-6 space-y-4 text-left">
-                      <div className="flex justify-between items-start gap-2">
-                        <h3 className="text-lg font-extrabold text-brand-green dark:text-brand-cream group-hover:text-brand-gold transition-colors duration-300">
-                          {item.name}
-                        </h3>
-                        <span className="text-lg font-serif font-extrabold text-brand-gold shrink-0">
-                          ₹{item.price}
-                        </span>
-                      </div>
+                      <div className="flex-grow flex flex-col space-y-4 cursor-pointer" onClick={() => setSelectedItem(item)}>
+                        <div className="flex justify-between items-start gap-2">
+                          <h3 className="text-lg font-extrabold text-brand-green dark:text-brand-cream group-hover:text-brand-gold transition-colors duration-300">
+                            {item.name}
+                          </h3>
+                          <span className="text-lg font-serif font-extrabold text-brand-gold shrink-0">
+                            ₹{item.price}
+                          </span>
+                        </div>
 
-                      <p className="text-xs sm:text-sm text-brand-green/70 dark:text-brand-cream/65 leading-relaxed flex-grow font-semibold line-clamp-3">
-                        {item.description}
-                      </p>
+                        <p className="text-xs sm:text-sm text-brand-green/70 dark:text-brand-cream/65 leading-relaxed flex-grow font-semibold line-clamp-3">
+                          {item.description}
+                        </p>
+                      </div>
 
                       {/* Cart Buttons */}
                       <div className="pt-2">
@@ -225,6 +242,19 @@ export const Menu: React.FC<MenuProps> = ({ categories, menuItems }) => {
           )}
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {selectedItem && (
+          <FoodDetailModal
+            isOpen={!!selectedItem}
+            onClose={() => setSelectedItem(null)}
+            item={selectedItem}
+            allMenuItems={menuItems}
+            onItemClick={(newItem) => setSelectedItem(newItem)}
+            onCartOpen={onCartOpen}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 };

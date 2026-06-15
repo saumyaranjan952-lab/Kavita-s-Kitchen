@@ -36,6 +36,18 @@ type MenuItem = {
   isBestSeller: boolean;
   availability: string;
   categoryId: string;
+  
+  rating?: number | null;
+  ingredients?: string[];
+  calories?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fat?: number | null;
+  serves?: string | null;
+  portionSize?: string | null;
+  spiceLevel?: string | null;
+  customizations?: any;
+  relatedItems?: string[];
 };
 
 type SubscriptionPlan = {
@@ -102,7 +114,7 @@ export default function HomeClient({ data }: HomeClientProps) {
         />
         <About />
         <WhyChooseUs />
-        <Menu categories={data.categories} menuItems={data.menuItems} />
+        <Menu categories={data.categories} menuItems={data.menuItems} onCartOpen={() => setIsCartOpen(true)} />
         <Subscriptions plans={data.subscriptionPlans} whatsApp={data.config.whatsApp} />
         <Testimonials reviews={data.reviews} />
         <InstagramFeed config={data.config} />
@@ -131,6 +143,7 @@ export default function HomeClient({ data }: HomeClientProps) {
             onClose={() => setIsMenuOpen(false)}
             menuItems={data.menuItems}
             categories={data.categories}
+            onCartOpen={() => setIsCartOpen(true)}
           />
         )}
       </AnimatePresence>

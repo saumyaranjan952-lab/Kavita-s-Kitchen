@@ -39,6 +39,19 @@ model MenuItem {
   order         Int      @default(0)
   categoryId    String
   category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Rich Detail Fields
+  rating        Float?   @default(4.8)
+  ingredients   String[] @default([])
+  calories      Int?
+  protein       Float?
+  carbs         Float?
+  fat           Float?
+  serves        String?
+  portionSize   String?
+  spiceLevel    String?
+  customizations Json?   // Stored as JSON array of [{ name: string, price: number }]
+  relatedItems  String[] @default([])
 }
 
 model SubscriptionPlan {

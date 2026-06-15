@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useCart } from "@/context/CartContext";
 import { Plus, Minus, Search, Sparkles, X, Flame, Sparkle, CircleDollarSign } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FoodDetailModal } from "./FoodDetailModal";
 
 type Category = {
   id: string;
@@ -24,6 +25,18 @@ type MenuItem = {
   isBestSeller: boolean;
   availability: string;
   categoryId: string;
+  
+  rating?: number | null;
+  ingredients?: string[];
+  calories?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fat?: number | null;
+  serves?: string | null;
+  portionSize?: string | null;
+  spiceLevel?: string | null;
+  customizations?: any;
+  relatedItems?: string[];
 };
 
 interface MenuOverlayProps {
@@ -31,13 +44,15 @@ interface MenuOverlayProps {
   onClose: () => void;
   menuItems: MenuItem[];
   categories: Category[];
+  onCartOpen?: () => void;
 }
 
 export const MenuOverlay: React.FC<MenuOverlayProps> = ({
   isOpen,
   onClose,
   menuItems,
-  categories
+  categories,
+  onCartOpen
 }) => {
   const { cart, addToCart, updateQuantity } = useCart();
   
@@ -49,6 +64,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
   
   const [activeCategory, setActiveCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Lock body scroll when overlay is open
@@ -334,7 +350,7 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
                         }`}
                       >
                         {/* Image Frame */}
-                        <div className="relative h-44 w-full overflow-hidden shrink-0">
+                        <div onClick={() => setSelectedItem(item)} className="relative h-44 w-full overflow-hidden shrink-0 cursor-pointer">
                           <img
                             src={item.image}
                             alt={item.name}
@@ -363,22 +379,24 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
 
                         {/* Content Frame */}
                         <div className="p-5 flex flex-col flex-grow text-left space-y-3">
-                          <div className="flex justify-between items-start gap-2">
-                            <h3 className={`text-base font-extrabold text-brand-green dark:text-brand-cream transition-colors duration-300 line-clamp-1 ${
-                              activeFoodType === "veg"
-                                ? "group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
-                                : "group-hover:text-brand-gold"
-                            }`}>
-                              {item.name}
-                            </h3>
-                            <span className="text-base font-serif font-extrabold text-brand-gold shrink-0">
-                              ₹{item.price}
-                            </span>
-                          </div>
+                          <div className="flex-grow flex flex-col space-y-3 cursor-pointer" onClick={() => setSelectedItem(item)}>
+                            <div className="flex justify-between items-start gap-2">
+                              <h3 className={`text-base font-extrabold text-brand-green dark:text-brand-cream transition-colors duration-300 line-clamp-1 ${
+                                activeFoodType === "veg"
+                                  ? "group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
+                                  : "group-hover:text-brand-gold"
+                              }`}>
+                                {item.name}
+                              </h3>
+                              <span className="text-base font-serif font-extrabold text-brand-gold shrink-0">
+                                ₹{item.price}
+                              </span>
+                            </div>
 
-                          <p className="text-xs text-brand-green/75 dark:text-brand-cream/70 font-semibold leading-relaxed flex-grow line-clamp-2">
-                            {item.description}
-                          </p>
+                            <p className="text-xs text-brand-green/75 dark:text-brand-cream/70 font-semibold leading-relaxed flex-grow line-clamp-2">
+                              {item.description}
+                            </p>
+                          </div>
 
                           <div className="flex items-center justify-between pt-2.5 border-t border-white/10 dark:border-brand-green/10">
                             {getAvailabilityBadge(item.availability)}
@@ -451,6 +469,19 @@ export const MenuOverlay: React.FC<MenuOverlayProps> = ({
             )}
           </div>
         </div>
+
+        <AnimatePresence>
+          {selectedItem && (
+            <FoodDetailModal
+              isOpen={!!selectedItem}
+              onClose={() => setSelectedItem(null)}
+              item={selectedItem}
+              allMenuItems={menuItems}
+              onItemClick={(newItem) => setSelectedItem(newItem)}
+              onCartOpen={onCartOpen}
+            />
+          )}
+        </AnimatePresence>
       </motion.div>
     </motion.div>
   );

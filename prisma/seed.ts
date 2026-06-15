@@ -71,7 +71,21 @@ async function main() {
       categoryId: "odia-specials",
       isVeg: true,
       isPopular: true,
-      order: 1
+      order: 1,
+      rating: 4.8,
+      ingredients: ["Yellow Lentils", "Raw Banana", "Pumpkin", "Brinjal", "Papaya", "Ghee", "Roasted Cumin-Chilli Powder", "Ginger", "Coconut Grated"],
+      calories: 310,
+      protein: 14.5,
+      carbs: 48.0,
+      fat: 6.5,
+      serves: "1 Person",
+      portionSize: "Portion (400ml)",
+      spiceLevel: "Low",
+      customizations: [
+        { name: "Extra Ghee", price: 15 },
+        { name: "Extra Grated Coconut", price: 10 }
+      ],
+      relatedItems: ["pakhala", "veg-thali"]
     },
     {
       id: "santula",
@@ -127,7 +141,23 @@ async function main() {
       categoryId: "thalis",
       isVeg: false,
       isPopular: true,
-      order: 6
+      order: 6,
+      rating: 4.9,
+      ingredients: ["Fresh Farm Chicken", "Potatoes", "Onion", "Tomato", "Ginger", "Garlic", "Traditional Odia Spices", "Mustard Oil", "Fresh Coriander"],
+      calories: 680,
+      protein: 34.5,
+      carbs: 72.0,
+      fat: 18.2,
+      serves: "1-2 Persons",
+      portionSize: "Full Thali (750g)",
+      spiceLevel: "Medium",
+      customizations: [
+        { name: "Extra Rice", price: 20 },
+        { name: "Extra Gravy", price: 15 },
+        { name: "Extra Salad", price: 10 },
+        { name: "Extra Roti (1 pc)", price: 10 }
+      ],
+      relatedItems: ["dalma", "veg-thali", "lassi"]
     },
     {
       id: "special-odia-thali",
@@ -184,7 +214,21 @@ async function main() {
       categoryId: "beverages",
       isVeg: true,
       isPopular: true,
-      order: 11
+      order: 11,
+      rating: 4.9,
+      ingredients: ["Fresh Curd", "Puri Rabidi", "Grated Coconut", "Sugar", "Cherries", "Crushed Dry Fruits", "Ice"],
+      calories: 420,
+      protein: 8.0,
+      carbs: 62.0,
+      fat: 15.5,
+      serves: "1 Person",
+      portionSize: "Glass (350ml)",
+      spiceLevel: "None",
+      customizations: [
+        { name: "Extra Rabidi", price: 25 },
+        { name: "Extra Dry Fruits", price: 15 }
+      ],
+      relatedItems: ["chaas", "bara-ghuguni"]
     }
   ];
 
@@ -199,7 +243,18 @@ async function main() {
         categoryId: item.categoryId,
         isVeg: item.isVeg,
         isPopular: item.isPopular,
-        order: item.order
+        order: item.order,
+        rating: (item as any).rating ?? 4.8,
+        ingredients: (item as any).ingredients ?? [],
+        calories: (item as any).calories ?? null,
+        protein: (item as any).protein ?? null,
+        carbs: (item as any).carbs ?? null,
+        fat: (item as any).fat ?? null,
+        serves: (item as any).serves ?? null,
+        portionSize: (item as any).portionSize ?? null,
+        spiceLevel: (item as any).spiceLevel ?? null,
+        customizations: (item as any).customizations ?? null,
+        relatedItems: (item as any).relatedItems ?? [],
       },
       create: {
         id: item.id,
@@ -210,7 +265,18 @@ async function main() {
         categoryId: item.categoryId,
         isVeg: item.isVeg,
         isPopular: item.isPopular,
-        order: item.order
+        order: item.order,
+        rating: (item as any).rating ?? 4.8,
+        ingredients: (item as any).ingredients ?? [],
+        calories: (item as any).calories ?? null,
+        protein: (item as any).protein ?? null,
+        carbs: (item as any).carbs ?? null,
+        fat: (item as any).fat ?? null,
+        serves: (item as any).serves ?? null,
+        portionSize: (item as any).portionSize ?? null,
+        spiceLevel: (item as any).spiceLevel ?? null,
+        customizations: (item as any).customizations ?? null,
+        relatedItems: (item as any).relatedItems ?? [],
       }
     });
   }
