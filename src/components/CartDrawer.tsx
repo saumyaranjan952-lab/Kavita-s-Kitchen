@@ -4,6 +4,7 @@ import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import { Button } from "./ui/Button";
 
 interface CartDrawerProps {
   isOpen: boolean;
