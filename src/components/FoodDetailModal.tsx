@@ -615,36 +615,53 @@ export const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
         </div>
 
         {/* 3. Sticky Footer Action Panel */}
-        <div className="absolute bottom-0 left-0 right-0 p-5 bg-white/80 dark:bg-zinc-900/80 border-t border-gray-100 dark:border-zinc-800 backdrop-blur-lg flex items-center justify-between gap-4 z-40">
-          <div className="text-left shrink-0">
-            <span className="text-[10px] font-black uppercase text-gray-400 dark:text-zinc-500 tracking-wider">Total Price</span>
-            <p className="text-2xl font-serif font-black text-brand-gold leading-none mt-1">
-              ₹{totalPrice}
-            </p>
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 bg-white/80 dark:bg-zinc-900/80 border-t border-gray-100 dark:border-zinc-800 backdrop-blur-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 z-40">
+          <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-4">
+            <div className="text-left">
+              <span className="text-[10px] font-black uppercase text-gray-400 dark:text-zinc-500 tracking-wider">Total Price</span>
+              <p className="text-xl sm:text-2xl font-serif font-black text-brand-gold leading-none mt-1">
+                ₹{totalPrice}
+              </p>
+            </div>
+
+            <button
+              onClick={handleWhatsAppOrder}
+              className="p-2.5 sm:hidden bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl cursor-pointer transition-all duration-300 focus:outline-none hover:shadow-md flex items-center justify-center shrink-0"
+              title="Order directly on WhatsApp"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 448 512"
+                fill="currentColor"
+                className="w-4 h-4"
+              >
+                <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+              </svg>
+            </button>
           </div>
 
-          <div className="flex items-center gap-2 flex-grow justify-end max-w-sm">
+          <div className="flex items-center gap-2 w-full sm:w-auto sm:max-w-sm sm:flex-grow justify-end">
             {isAvailable ? (
               <>
                 <button
                   onClick={handleAddToCart}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4.5 py-3 border-2 border-brand-gold hover:bg-brand-gold hover:text-brand-green-dark text-brand-gold rounded-xl text-xs font-bold cursor-pointer transition-all duration-300 focus:outline-none hover:shadow-md"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-brand-gold hover:bg-brand-gold hover:text-brand-green-dark text-brand-gold rounded-xl text-xs font-bold cursor-pointer transition-all duration-300 focus:outline-none hover:shadow-md"
                 >
-                  <Plus className="w-4 h-4 stroke-[3px]" />
+                  <Plus className="w-3.5 h-3.5 stroke-[3px]" />
                   ADD TO CART
                 </button>
                 <button
                   onClick={handleOrderNow}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4.5 py-3 bg-[#0f3d2e] hover:bg-[#072219] text-[#FCFAF2] border-2 border-[#0f3d2e] hover:border-[#072219] rounded-xl text-xs font-bold cursor-pointer transition-all duration-300 focus:outline-none hover:shadow-md"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-3 bg-[#0f3d2e] hover:bg-[#072219] text-[#FCFAF2] border-2 border-[#0f3d2e] hover:border-[#072219] rounded-xl text-xs font-bold cursor-pointer transition-all duration-300 focus:outline-none hover:shadow-md"
                 >
-                  <ShoppingBag className="w-4 h-4" />
+                  <ShoppingBag className="w-3.5 h-3.5" />
                   ORDER NOW
                 </button>
               </>
             ) : (
               <button
                 disabled
-                className="w-full py-3 bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-zinc-600 rounded-xl text-xs font-bold cursor-not-allowed border border-transparent text-center"
+                className="w-full py-2.5 sm:py-3 bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-zinc-600 rounded-xl text-xs font-bold cursor-not-allowed border border-transparent text-center"
               >
                 OUT OF STOCK
               </button>
@@ -652,10 +669,17 @@ export const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
 
             <button
               onClick={handleWhatsAppOrder}
-              className="p-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl cursor-pointer transition-all duration-300 focus:outline-none hover:shadow-md"
+              className="hidden sm:block p-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl cursor-pointer transition-all duration-300 focus:outline-none hover:shadow-md shrink-0"
               title="Order directly on WhatsApp"
             >
-              <Send className="w-4 h-4" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 448 512"
+                fill="currentColor"
+                className="w-4 h-4"
+              >
+                <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+              </svg>
             </button>
           </div>
         </div>
