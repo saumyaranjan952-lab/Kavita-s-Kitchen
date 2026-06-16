@@ -54,20 +54,17 @@ export default function SignupClient({ initialData }: { initialData: { categorie
     setTimerActive(true);
   };
  
-  const [state, formAction, isPending] = useActionState(
-    async (prevState: any, formData: FormData) => {
-      const res = await customerSignup(prevState, formData);
-      if (res.success && res.email) {
-        setVerificationEmail(res.email);
-        setVerificationStep("email");
-        setSuccessMessage("✅ Email Verification Sent");
-        setVerificationError("");
-        startResendTimer();
-      }
-      return res;
-    },
-    null
-  );
+  const [state, formAction, isPending] = useActionState(customerSignup, null);
+
+  useEffect(() => {
+    if (state?.success && state?.email) {
+      setVerificationEmail(state.email);
+      setVerificationStep("email");
+      setSuccessMessage("✅ Email Verification Sent");
+      setVerificationError("");
+      startResendTimer();
+    }
+  }, [state]);
  
   const handleEmailVerificationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,13 +134,7 @@ export default function SignupClient({ initialData }: { initialData: { categorie
     }
   };
  
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    startTransition(() => {
-      formAction(formData);
-    });
-  };
+  // Removed manual handleSubmit, using standard action={formAction} on form
  
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-zinc-950 transition-colors duration-300">
@@ -171,7 +162,7 @@ export default function SignupClient({ initialData }: { initialData: { categorie
                   </div>
  
                   {/* Form */}
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form action={formAction} className="space-y-4">
                     <div className="space-y-1">
                       <label className="block text-xs font-bold uppercase text-brand-gold">Full Name</label>
                       <div className="relative">

@@ -4,6 +4,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { verifyPassword, hashPassword } from "@/lib/hash";
+import { sendEmail, sendSMS } from "@/lib/notifications";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "kavitas-kitchen-super-secret-key-12345"
@@ -152,8 +153,23 @@ export async function customerSignup(prevState: any, formData: FormData) {
       });
     }
 
-    // Simulated Email Notification
-    console.log(`[SIMULATED EMAIL] To: ${user.email} | Subject: Verify Your Kavita's Kitchen Account | Content: Welcome to Kavita's Kitchen! Your verification code is: ${emailCode}. This code expires in 10 minutes. If you did not request this account, please ignore this email.`);
+    // Send actual Email Notification
+    await sendEmail({
+      to: user.email,
+      subject: "Verify Your Kavita's Kitchen Account",
+      text: `Welcome to Kavita's Kitchen!\n\nYour verification code is: ${emailCode}\n\nThis code expires in 10 minutes.`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #eaeaea; border-radius: 10px;">
+          <h2 style="color: #0f3d2e; text-align: center;">Welcome to Kavita's Kitchen!</h2>
+          <p>Hi ${name},</p>
+          <p>Thank you for signing up. Please verify your account using the 6-digit verification code below:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #d4af37; background: #f9f9f9; padding: 10px 20px; border-radius: 5px; border: 1px dashed #d4af37;">${emailCode}</span>
+          </div>
+          <p style="font-size: 12px; color: #666; text-align: center;">This code will expire in 10 minutes.</p>
+        </div>
+      `,
+    });
 
     // Create a notification record for the user
     await db.notification.create({
@@ -221,8 +237,13 @@ export async function verifyCustomerEmailCode(email: string, code: string) {
       },
     });
 
-    // Simulated Mobile OTP (Twilio, MSG91, Firebase, AWS SNS)
-    console.log(`[SIMULATED OTP] To Mobile: ${user.phone} | Your OTP is: ${phoneCode}. This OTP expires in 10 minutes.`);
+    // Send actual Mobile OTP SMS
+    if (user.phone) {
+      await sendSMS({
+        to: user.phone,
+        message: `Your Kavita's Kitchen mobile verification OTP is ${phoneCode}. Valid for 10 minutes.`,
+      });
+    }
 
     // Create a notification record
     await db.notification.create({
@@ -354,7 +375,21 @@ export async function resendVerificationCode(email: string, type: "email" | "mob
         },
       });
 
-      console.log(`[SIMULATED EMAIL] To: ${user.email} | Subject: Verify Your Kavita's Kitchen Account | Content: Welcome to Kavita's Kitchen! Your verification code is: ${newCode}. This code expires in 10 minutes.`);
+      await sendEmail({
+        to: user.email,
+        subject: "Verify Your Kavita's Kitchen Account",
+        text: `Welcome to Kavita's Kitchen!\n\nYour verification code is: ${newCode}\n\nThis code expires in 10 minutes.`,
+        html: `
+          <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #eaeaea; border-radius: 10px;">
+            <h2 style="color: #0f3d2e; text-align: center;">Kavita's Kitchen</h2>
+            <p>Please verify your account using the new 6-digit verification code below:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #d4af37; background: #f9f9f9; padding: 10px 20px; border-radius: 5px; border: 1px dashed #d4af37;">${newCode}</span>
+            </div>
+            <p style="font-size: 12px; color: #666; text-align: center;">This code will expire in 10 minutes.</p>
+          </div>
+        `,
+      });
     } else {
       if (!user.emailVerified) {
         return { error: "Please verify your email first." };
@@ -369,7 +404,12 @@ export async function resendVerificationCode(email: string, type: "email" | "mob
         },
       });
 
-      console.log(`[SIMULATED OTP] To Mobile: ${user.phone} | Your OTP is: ${newCode}. This OTP expires in 10 minutes.`);
+      if (user.phone) {
+        await sendSMS({
+          to: user.phone,
+          message: `Your Kavita's Kitchen mobile verification OTP is ${newCode}. Valid for 10 minutes.`,
+        });
+      }
     }
 
     return { success: true };
@@ -441,9 +481,28 @@ export async function customerLogin(prevState: any, formData: FormData) {
       });
 
       if (!user.emailVerified) {
-        console.log(`[SIMULATED EMAIL] To: ${user.email} | Subject: Verify Your Kavita's Kitchen Account | Content: Welcome to Kavita's Kitchen! Your verification code is: ${emailCode}.`);
+        await sendEmail({
+          to: user.email,
+          subject: "Verify Your Kavita's Kitchen Account",
+          text: `Welcome back!\n\nYour verification code is: ${emailCode}\n\nThis code expires in 10 minutes.`,
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #eaeaea; border-radius: 10px;">
+              <h2 style="color: #0f3d2e; text-align: center;">Kavita's Kitchen</h2>
+              <p>Please verify your account using the 6-digit verification code below:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #d4af37; background: #f9f9f9; padding: 10px 20px; border-radius: 5px; border: 1px dashed #d4af37;">${emailCode}</span>
+              </div>
+              <p style="font-size: 12px; color: #666; text-align: center;">This code will expire in 10 minutes.</p>
+            </div>
+          `,
+        });
       } else {
-        console.log(`[SIMULATED OTP] To Mobile: ${user.phone} | Your OTP is: ${phoneCode}.`);
+        if (user.phone) {
+          await sendSMS({
+            to: user.phone,
+            message: `Your Kavita's Kitchen mobile verification OTP is ${phoneCode}. Valid for 10 minutes.`,
+          });
+        }
       }
 
       return { 

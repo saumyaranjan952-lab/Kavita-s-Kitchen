@@ -62,29 +62,27 @@ export default function LoginClient({ initialData }: { initialData: { categories
     setTimerActive(true);
   };
  
-  const [state, formAction, isPending] = useActionState(
-    async (prevState: any, formData: FormData) => {
-      const res = await customerLogin(prevState, formData);
-      if (res.success) {
-        router.push(redirect);
-        router.refresh();
-      } else if (res.requiresVerification && res.email) {
-        setVerificationEmail(res.email);
-        setVerificationError("");
-        setSuccessMessage("✅ Verification Required");
-        
-        // Start verification step depending on what is already verified
-        if (!res.emailVerified) {
-          setVerificationStep("email");
-        } else if (!res.phoneVerified) {
-          setVerificationStep("mobile");
-        }
-        startResendTimer();
+  const [state, formAction, isPending] = useActionState(customerLogin, null);
+
+  useEffect(() => {
+    if (!state) return;
+    if (state.success) {
+      router.push(redirect);
+      router.refresh();
+    } else if (state.requiresVerification && state.email) {
+      setVerificationEmail(state.email);
+      setVerificationError("");
+      setSuccessMessage("✅ Verification Required");
+      
+      // Start verification step depending on what is already verified
+      if (!state.emailVerified) {
+        setVerificationStep("email");
+      } else if (!state.phoneVerified) {
+        setVerificationStep("mobile");
       }
-      return res;
-    },
-    null
-  );
+      startResendTimer();
+    }
+  }, [state, router, redirect]);
  
   const handleEmailVerificationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,13 +152,7 @@ export default function LoginClient({ initialData }: { initialData: { categories
     }
   };
  
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    startTransition(() => {
-      formAction(formData);
-    });
-  };
+  // Removed manual handleSubmit, using standard action={formAction} on form
  
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-zinc-950 transition-colors duration-300">
@@ -188,7 +180,7 @@ export default function LoginClient({ initialData }: { initialData: { categories
                   </div>
  
                   {/* Form */}
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form action={formAction} className="space-y-4">
                     <div className="space-y-1">
                       <label className="block text-xs font-bold uppercase text-brand-gold">Email Address or Mobile Number</label>
                       <div className="relative">
