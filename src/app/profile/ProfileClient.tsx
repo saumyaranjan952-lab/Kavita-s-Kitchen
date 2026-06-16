@@ -346,9 +346,9 @@ export default function ProfileClient({ initialData }: ProfileClientProps) {
                             <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-green/30" />
                             <input
                               type="email"
-                              disabled
-                              value={initialData.customer.email}
-                              className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-[var(--card-border)] bg-gray-100 dark:bg-zinc-800 text-brand-green/45 cursor-not-allowed font-semibold"
+                              readOnly
+                              value={initialData.customer.email || "No email associated with this account"}
+                              className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-[var(--card-border)] bg-gray-100 dark:bg-zinc-800 text-brand-green dark:text-brand-cream cursor-not-allowed font-semibold"
                             />
                           </div>
                         </div>
