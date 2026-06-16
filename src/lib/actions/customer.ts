@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { checkCustomerSession } from "./customerAuth";
+import { checkCustomerSession, detectIdentifierType } from "./customerAuth";
 import { revalidatePath } from "next/cache";
 
 /**
@@ -104,11 +104,31 @@ export async function updateCustomerProfile(name: string, phone?: string) {
       return { error: "Name cannot be empty." };
     }
 
+    let normalizedPhone: string | null = null;
+    if (phone && phone.trim() !== "") {
+      const phoneDetection = await detectIdentifierType(phone);
+      if (phoneDetection.type !== "mobile") {
+        return { error: "❌ Invalid Mobile Number" };
+      }
+      normalizedPhone = phoneDetection.normalized;
+
+      // Check if another user is already using this phone number
+      const existingPhone = await db.user.findFirst({
+        where: {
+          phone: normalizedPhone,
+          id: { not: customer.id },
+        },
+      });
+      if (existingPhone) {
+        return { error: "An account with this phone number already exists." };
+      }
+    }
+
     const updated = await db.user.update({
       where: { id: customer.id },
       data: {
         name,
-        phone: phone || null,
+        phone: normalizedPhone,
       },
     });
 

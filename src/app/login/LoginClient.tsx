@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useActionState, startTransition } from "react";
+import React, { useState, useEffect, useActionState, startTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/Header";
@@ -17,6 +17,16 @@ export default function LoginClient({ initialData }: { initialData: { categories
 
   const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
+  const [randomPhone, setRandomPhone] = useState("9876543210");
+
+  useEffect(() => {
+    const start = Math.floor(Math.random() * 4) + 6; // starts with 6, 7, 8, or 9
+    let rest = "";
+    for (let i = 0; i < 9; i++) {
+      rest += Math.floor(Math.random() * 10).toString();
+    }
+    setRandomPhone(`${start}${rest}`);
+  }, []);
 
   // Email verification states
   const [needsVerification, setNeedsVerification] = useState(false);
@@ -96,19 +106,22 @@ export default function LoginClient({ initialData }: { initialData: { categories
                   {/* Form */}
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-1">
-                      <label className="block text-xs font-bold uppercase text-brand-gold">Email Address</label>
+                      <label className="block text-xs font-bold uppercase text-brand-gold">Email Address or Mobile Number</label>
                       <div className="relative">
                         <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-gold" />
                         <input
-                          type="email"
-                          name="email"
+                          type="text"
+                          name="emailOrPhone"
                           required
                           value={emailInput}
                           onChange={(e) => setEmailInput(e.target.value)}
-                          placeholder="yourname@email.com"
+                          placeholder="Enter your email or mobile number"
                           className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none focus:ring-1 focus:ring-brand-gold font-semibold"
                         />
                       </div>
+                      <p className="text-[10px] text-brand-green/45 dark:text-brand-cream/45 mt-1 font-semibold pl-1">
+                        Examples: user@gmail.com or {randomPhone}
+                      </p>
                     </div>
 
                     <div className="space-y-1">

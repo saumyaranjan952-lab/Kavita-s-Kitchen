@@ -10,6 +10,52 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 /**
+ * Detects if the identifier is an Email or a 10-digit Indian Mobile Number.
+ * Normalizes the input (stripping country codes, whitespace, etc.).
+ */
+export async function detectIdentifierType(identifier: string): 
+  Promise<
+    | { type: "email"; normalized: string }
+    | { type: "mobile"; normalized: string }
+    | { type: "invalid"; error: string }
+  > {
+  
+  const trimmed = identifier.trim();
+  
+  // Normalize phone number (strip whitespace, dashes, parens)
+  let cleanPhone = trimmed.replace(/[\s\-\(\)]/g, "");
+  
+  // Strip optional leading +91, 91, or 0
+  if (cleanPhone.startsWith("+91")) {
+    cleanPhone = cleanPhone.substring(3);
+  } else if (cleanPhone.startsWith("91") && cleanPhone.length === 12) {
+    cleanPhone = cleanPhone.substring(2);
+  } else if (cleanPhone.startsWith("0") && cleanPhone.length === 11) {
+    cleanPhone = cleanPhone.substring(1);
+  }
+
+  // Treat as email if it contains any alphabetic characters or '@'
+  const hasLettersOrAt = /[a-zA-Z]/.test(trimmed) || trimmed.includes("@");
+
+  if (!hasLettersOrAt && trimmed.length > 0) {
+    // Validate as 10-digit Indian mobile number
+    const isNumeric = /^\d+$/.test(cleanPhone);
+    const isValidIndianMobile = isNumeric && /^[6-9]\d{9}$/.test(cleanPhone);
+    if (isValidIndianMobile) {
+      return { type: "mobile", normalized: cleanPhone };
+    }
+    return { type: "invalid", error: "❌ Invalid Mobile Number" };
+  }
+
+  // Validate as email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (emailRegex.test(trimmed)) {
+    return { type: "email", normalized: trimmed.toLowerCase() };
+  }
+  return { type: "invalid", error: "❌ Invalid Email Address" };
+}
+
+/**
  * Handles customer registration.
  */
 export async function customerSignup(prevState: any, formData: FormData) {
@@ -22,13 +68,37 @@ export async function customerSignup(prevState: any, formData: FormData) {
     return { error: "Please enter all required fields (Name, Email, Password)." };
   }
 
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    return { error: "❌ Invalid Email Address" };
+  }
+
+  let normalizedPhone: string | null = null;
+  if (phone && phone.trim()) {
+    const phoneDetection = await detectIdentifierType(phone);
+    if (phoneDetection.type !== "mobile") {
+      return { error: "❌ Invalid Mobile Number" };
+    }
+    normalizedPhone = phoneDetection.normalized;
+  }
+
   try {
     const existing = await db.user.findUnique({
-      where: { email },
+      where: { email: email.trim().toLowerCase() },
     });
 
     if (existing) {
       return { error: "An account with this email already exists." };
+    }
+
+    if (normalizedPhone) {
+      const existingPhone = await db.user.findFirst({
+        where: { phone: normalizedPhone },
+      });
+      if (existingPhone) {
+        return { error: "An account with this phone number already exists." };
+      }
     }
 
     const passwordHash = hashPassword(password);
@@ -37,8 +107,8 @@ export async function customerSignup(prevState: any, formData: FormData) {
     const user = await db.user.create({
       data: {
         name,
-        email,
-        phone: phone || null,
+        email: email.trim().toLowerCase(),
+        phone: normalizedPhone,
         passwordHash,
         isVerified: false,
         verificationToken,
@@ -125,20 +195,38 @@ export async function verifyCustomerEmail(email: string, code: string) {
  * Handles customer login.
  */
 export async function customerLogin(prevState: any, formData: FormData) {
-  const email = formData.get("email") as string;
+  const emailOrPhone = (formData.get("emailOrPhone") as string || formData.get("email") as string || "").trim();
   const password = formData.get("password") as string;
 
-  if (!email || !password) {
-    return { error: "Please enter both email and password." };
+  if (!emailOrPhone || !password) {
+    return { error: "Please enter both email/mobile and password." };
+  }
+
+  const detection = await detectIdentifierType(emailOrPhone);
+  if (detection.type === "invalid") {
+    return { error: detection.error };
   }
 
   try {
-    const user = await db.user.findUnique({
-      where: { email },
-    });
+    let user;
+    if (detection.type === "email") {
+      user = await db.user.findUnique({
+        where: { email: detection.normalized },
+      });
+      if (!user) {
+        return { error: "❌ Invalid Email Address" };
+      }
+    } else {
+      user = await db.user.findFirst({
+        where: { phone: detection.normalized },
+      });
+      if (!user) {
+        return { error: "❌ Invalid Mobile Number" };
+      }
+    }
 
-    if (!user || !verifyPassword(password, user.passwordHash)) {
-      return { error: "Invalid email or password." };
+    if (!verifyPassword(password, user.passwordHash)) {
+      return { error: "❌ Incorrect Password" };
     }
 
     if (!user.isVerified) {
