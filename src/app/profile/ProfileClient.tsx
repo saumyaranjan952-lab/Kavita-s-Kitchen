@@ -334,6 +334,7 @@ export default function ProfileClient({ initialData }: ProfileClientProps) {
                               required
                               value={customerName}
                               onChange={(e) => setCustomerName(e.target.value)}
+                              placeholder="Enter your full name"
                               className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none focus:ring-1 focus:ring-brand-gold font-semibold"
                             />
                           </div>
@@ -360,7 +361,7 @@ export default function ProfileClient({ initialData }: ProfileClientProps) {
                               type="tel"
                               value={customerPhone}
                               onChange={(e) => setCustomerPhone(e.target.value)}
-                              placeholder="+91 98765 43210"
+                              placeholder="Enter your phone number"
                               className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none focus:ring-1 focus:ring-brand-gold font-semibold"
                             />
                           </div>
@@ -471,7 +472,7 @@ export default function ProfileClient({ initialData }: ProfileClientProps) {
                               <input
                                 type="text"
                                 required
-                                placeholder="Saumya Ranjan"
+                                placeholder="Enter your full name"
                                 value={newName}
                                 onChange={(e) => setNewName(e.target.value)}
                                 className="w-full text-xs p-2.5 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none"
@@ -482,7 +483,7 @@ export default function ProfileClient({ initialData }: ProfileClientProps) {
                               <input
                                 type="tel"
                                 required
-                                placeholder="+91 98765 43210"
+                                placeholder="Enter your phone number"
                                 value={newPhone}
                                 onChange={(e) => setNewPhone(e.target.value)}
                                 className="w-full text-xs p-2.5 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none"

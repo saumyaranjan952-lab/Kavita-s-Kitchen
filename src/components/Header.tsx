@@ -25,7 +25,7 @@ type BusinessConfig = {
 interface HeaderProps {
   categories: Category[];
   config: BusinessConfig;
-  onCartOpen: () => void;
+  onCartOpen?: () => void;
   onMenuOpen?: () => void;
   onSubscriptionsOpen?: () => void;
 }
@@ -58,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
   onMenuOpen,
   onSubscriptionsOpen
 }) => {
-  const { cartCount } = useCart();
+  const { cartCount, setIsCartOpen } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
@@ -148,7 +148,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Cart Icon */}
           <button
-            onClick={onCartOpen}
+            onClick={() => setIsCartOpen(true)}
             className="relative p-2.5 rounded-full bg-brand-green text-brand-cream hover:bg-brand-green-light dark:bg-brand-gold dark:text-brand-green-dark dark:hover:bg-brand-gold-light transition-all duration-300 cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2"
             aria-label="View Cart"
           >

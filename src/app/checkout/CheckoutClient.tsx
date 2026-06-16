@@ -268,7 +268,7 @@ export default function CheckoutClient({ initialData }: { initialData: { categor
                           <input
                             type="text"
                             required
-                            placeholder="e.g. Saumya Ranjan"
+                            placeholder="Enter your full name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             className="w-full text-sm p-2.5 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none focus:ring-1 focus:ring-brand-gold"
@@ -279,7 +279,7 @@ export default function CheckoutClient({ initialData }: { initialData: { categor
                           <input
                             type="tel"
                             required
-                            placeholder="e.g. +91 98765 43210"
+                            placeholder="Enter your phone number"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
                             className="w-full text-sm p-2.5 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none focus:ring-1 focus:ring-brand-gold"

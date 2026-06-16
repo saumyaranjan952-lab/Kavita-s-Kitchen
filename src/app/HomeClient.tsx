@@ -11,7 +11,7 @@ import { Testimonials } from "@/components/Testimonials";
 import { InstagramFeed } from "@/components/Instagram";
 import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
-import { CartDrawer } from "@/components/CartDrawer";
+import { useCart } from "@/context/CartContext";
 import { FloatingWA } from "@/components/FloatingWA";
 import { MenuOverlay } from "@/components/MenuOverlay";
 import { SubscriptionsOverlay } from "@/components/SubscriptionsOverlay";
@@ -91,7 +91,7 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ data }: HomeClientProps) {
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { isCartOpen, setIsCartOpen } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSubscriptionsOpen, setIsSubscriptionsOpen] = useState(false);
 
@@ -132,8 +132,7 @@ export default function HomeClient({ data }: HomeClientProps) {
       {/* Persistent WhatsApp Floating Button */}
       <FloatingWA config={data.config} />
 
-      {/* Cart Slider Drawer */}
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+
 
       {/* Menu Overlay */}
       <AnimatePresence>

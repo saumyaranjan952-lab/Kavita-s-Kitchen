@@ -104,7 +104,7 @@ export default function SignupClient({ initialData }: { initialData: { categorie
                           required
                           value={nameInput}
                           onChange={(e) => setNameInput(e.target.value)}
-                          placeholder="Saumya Ranjan"
+                          placeholder="Enter your full name"
                           className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none focus:ring-1 focus:ring-brand-gold font-semibold"
                         />
                       </div>
@@ -135,7 +135,7 @@ export default function SignupClient({ initialData }: { initialData: { categorie
                           name="phone"
                           value={phoneInput}
                           onChange={(e) => setPhoneInput(e.target.value)}
-                          placeholder="+91 98765 43210"
+                          placeholder="Enter your phone number"
                           className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none focus:ring-1 focus:ring-brand-gold font-semibold"
                         />
                       </div>

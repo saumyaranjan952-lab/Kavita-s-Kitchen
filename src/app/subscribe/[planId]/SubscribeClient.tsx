@@ -248,7 +248,7 @@ export default function SubscribeClient({ initialData }: SubscribeClientProps) {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <input
                           type="text"
-                          placeholder="Recipient Name"
+                          placeholder="Enter your full name"
                           required
                           value={name}
                           onChange={(e) => setName(e.target.value)}
@@ -256,7 +256,7 @@ export default function SubscribeClient({ initialData }: SubscribeClientProps) {
                         />
                         <input
                           type="tel"
-                          placeholder="Phone Number"
+                          placeholder="Enter your phone number"
                           required
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}

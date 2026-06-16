@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { validateCoupon } from "@/lib/actions/orders";
+import { CartDrawer } from "@/components/CartDrawer";
 
 export type CartItem = {
   id: string;
@@ -30,6 +31,8 @@ type CartContextType = {
   couponError: string | null;
   applyCouponCode: (code: string) => Promise<boolean>;
   removeCouponCode: () => void;
+  isCartOpen: boolean;
+  setIsCartOpen: (open: boolean) => void;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -38,7 +41,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [cart, setCart] = useState<CartItem[]>([]);
   const [mounted, setMounted] = useState(false);
 
-  // Coupon state
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [discount, setDiscount] = useState<number>(0);
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -168,9 +171,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         couponError,
         applyCouponCode,
         removeCouponCode,
+        isCartOpen,
+        setIsCartOpen,
       }}
     >
       {children}
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </CartContext.Provider>
   );
 };
