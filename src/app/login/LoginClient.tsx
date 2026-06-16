@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import React, { useState, useEffect, useActionState, startTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -7,18 +7,23 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { customerLogin, verifyCustomerEmail } from "@/lib/actions/customerAuth";
+import { 
+  customerLogin, 
+  verifyCustomerEmailCode, 
+  verifyCustomerPhoneOTP, 
+  resendVerificationCode 
+} from "@/lib/actions/customerAuth";
 import { Mail, Lock, ShieldCheck, Loader2 } from "lucide-react";
-
+ 
 export default function LoginClient({ initialData }: { initialData: { categories: any[]; config: any } }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/profile";
-
+ 
   const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [randomPhone, setRandomPhone] = useState("9876543210");
-
+ 
   useEffect(() => {
     const start = Math.floor(Math.random() * 4) + 6; // starts with 6, 7, 8, or 9
     let rest = "";
@@ -27,14 +32,36 @@ export default function LoginClient({ initialData }: { initialData: { categories
     }
     setRandomPhone(`${start}${rest}`);
   }, []);
-
-  // Email verification states
-  const [needsVerification, setNeedsVerification] = useState(false);
+ 
+  // Verification states
+  const [verificationStep, setVerificationStep] = useState<"form" | "email" | "mobile">("form");
   const [verificationEmail, setVerificationEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationError, setVerificationError] = useState("");
   const [verifying, setVerifying] = useState(false);
-
+  const [successMessage, setSuccessMessage] = useState("");
+ 
+  // Countdown resend timer
+  const [resendTimer, setResendTimer] = useState(60);
+  const [timerActive, setTimerActive] = useState(false);
+ 
+  useEffect(() => {
+    let interval: any = null;
+    if (timerActive && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (resendTimer === 0) {
+      setTimerActive(false);
+    }
+    return () => clearInterval(interval);
+  }, [timerActive, resendTimer]);
+ 
+  const startResendTimer = () => {
+    setResendTimer(60);
+    setTimerActive(true);
+  };
+ 
   const [state, formAction, isPending] = useActionState(
     async (prevState: any, formData: FormData) => {
       const res = await customerLogin(prevState, formData);
@@ -43,33 +70,90 @@ export default function LoginClient({ initialData }: { initialData: { categories
         router.refresh();
       } else if (res.requiresVerification && res.email) {
         setVerificationEmail(res.email);
-        setNeedsVerification(true);
+        setVerificationError("");
+        setSuccessMessage("✅ Verification Required");
+        
+        // Start verification step depending on what is already verified
+        if (!res.emailVerified) {
+          setVerificationStep("email");
+        } else if (!res.phoneVerified) {
+          setVerificationStep("mobile");
+        }
+        startResendTimer();
       }
       return res;
     },
     null
   );
-
-  const handleVerificationSubmit = async (e: React.FormEvent) => {
+ 
+  const handleEmailVerificationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setVerificationError("");
+    setSuccessMessage("");
     if (!verificationCode) {
       setVerificationError("Please enter the verification code.");
       return;
     }
-
+ 
     setVerifying(true);
-    const res = await verifyCustomerEmail(verificationEmail, verificationCode);
+    const res = await verifyCustomerEmailCode(verificationEmail, verificationCode);
     setVerifying(false);
-
+ 
+    if (res.success && res.step === "mobile") {
+      setSuccessMessage("✅ Email Verified Successfully\n✅ OTP Sent Successfully");
+      setVerificationCode(""); // Reset field for OTP
+      setVerificationStep("mobile");
+      startResendTimer(); // Reset countdown for mobile step
+    } else {
+      setVerificationError(res.error || "❌ Invalid Verification Code");
+    }
+  };
+ 
+  const handleMobileVerificationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setVerificationError("");
+    setSuccessMessage("");
+    if (!verificationCode) {
+      setVerificationError("Please enter the OTP.");
+      return;
+    }
+ 
+    setVerifying(true);
+    const res = await verifyCustomerPhoneOTP(verificationEmail, verificationCode);
+    setVerifying(false);
+ 
     if (res.success) {
+      setSuccessMessage("✅ Mobile Number Verified\n✅ Account Created Successfully");
+      alert("🎉 Welcome to Kavita's Kitchen!\n\nYour account has been successfully verified and created.");
       router.push(redirect);
       router.refresh();
     } else {
-      setVerificationError(res.error || "Verification failed.");
+      setVerificationError(res.error || "❌ Invalid OTP");
     }
   };
-
+ 
+  const handleResendCode = async () => {
+    if (timerActive) return;
+    setVerificationError("");
+    setSuccessMessage("");
+ 
+    const res = await resendVerificationCode(
+      verificationEmail,
+      verificationStep === "email" ? "email" : "mobile"
+    );
+ 
+    if (res.success) {
+      if (verificationStep === "email") {
+        setSuccessMessage("✅ Email Verification Sent");
+      } else {
+        setSuccessMessage("✅ OTP Sent Successfully");
+      }
+      startResendTimer();
+    } else {
+      setVerificationError(res.error || "Failed to resend code.");
+    }
+  };
+ 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -77,7 +161,7 @@ export default function LoginClient({ initialData }: { initialData: { categories
       formAction(formData);
     });
   };
-
+ 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-zinc-950 transition-colors duration-300">
       <Header
@@ -85,13 +169,13 @@ export default function LoginClient({ initialData }: { initialData: { categories
         config={initialData.config}
         onCartOpen={() => {}}
       />
-
+ 
       <main className="flex-grow flex items-center justify-center py-16 px-4">
         <div className="w-full max-w-md">
           <Card className="shadow-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-left">
             <CardContent className="p-8">
               
-              {!needsVerification ? (
+              {verificationStep === "form" ? (
                 <div className="space-y-6">
                   {/* Title */}
                   <div className="text-center space-y-2">
@@ -102,7 +186,7 @@ export default function LoginClient({ initialData }: { initialData: { categories
                       Log in to order delicious homemade Odia food in Puri
                     </p>
                   </div>
-
+ 
                   {/* Form */}
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-1">
@@ -123,7 +207,7 @@ export default function LoginClient({ initialData }: { initialData: { categories
                         Examples: user@gmail.com or {randomPhone}
                       </p>
                     </div>
-
+ 
                     <div className="space-y-1">
                       <div className="flex justify-between items-center">
                         <label className="block text-xs font-bold uppercase text-brand-gold">Password</label>
@@ -147,11 +231,11 @@ export default function LoginClient({ initialData }: { initialData: { categories
                         />
                       </div>
                     </div>
-
+ 
                     {state?.error && (
                       <p className="text-xs text-red-500 font-bold">{state.error}</p>
                     )}
-
+ 
                     <div className="pt-2">
                       <Button variant="gold" fullWidth size="lg" type="submit" disabled={isPending} shimmer>
                         {isPending ? (
@@ -165,7 +249,7 @@ export default function LoginClient({ initialData }: { initialData: { categories
                       </Button>
                     </div>
                   </form>
-
+ 
                   {/* Switch to Signup */}
                   <div className="text-center text-xs font-semibold text-brand-green/60 dark:text-brand-cream/60 pt-2 border-t border-gray-100 dark:border-zinc-800">
                     Don&apos;t have an account?{" "}
@@ -177,22 +261,22 @@ export default function LoginClient({ initialData }: { initialData: { categories
                     </Link>
                   </div>
                 </div>
-              ) : (
+              ) : verificationStep === "email" ? (
                 <div className="space-y-6">
-                  {/* Verification Screen */}
+                  {/* Email Verification Screen */}
                   <div className="text-center space-y-2">
                     <div className="w-12 h-12 rounded-full bg-brand-gold/15 flex items-center justify-center text-brand-gold mx-auto">
                       <ShieldCheck className="w-7 h-7" />
                     </div>
                     <h3 className="font-serif text-xl font-extrabold text-brand-green dark:text-brand-cream">
-                      Verify Your Email
+                      Enter Email Verification Code
                     </h3>
                     <p className="text-xs text-brand-green/60 dark:text-brand-cream/60 font-semibold leading-relaxed">
-                      We have simulated a 6-digit verification code to your email <strong className="text-brand-gold">{verificationEmail}</strong>. Please check your logs/console output to retrieve it.
+                      We have simulated a 6-digit verification code to <strong className="text-brand-gold">{verificationEmail}</strong>. Please check your logs/console output to retrieve it.
                     </p>
                   </div>
-
-                  <form onSubmit={handleVerificationSubmit} className="space-y-4">
+ 
+                  <form onSubmit={handleEmailVerificationSubmit} className="space-y-4">
                     <div className="space-y-1">
                       <label className="block text-xs font-bold uppercase text-brand-gold text-center">6-Digit Verification Code</label>
                       <input
@@ -205,11 +289,17 @@ export default function LoginClient({ initialData }: { initialData: { categories
                         className="w-full text-center text-lg tracking-[0.4em] py-3 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none focus:ring-1 focus:ring-brand-gold font-black"
                       />
                     </div>
-
+ 
+                    {successMessage && (
+                      <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold text-center whitespace-pre-line">
+                        {successMessage}
+                      </div>
+                    )}
+ 
                     {verificationError && (
                       <p className="text-xs text-red-500 font-bold text-center">{verificationError}</p>
                     )}
-
+ 
                     <div className="pt-2">
                       <Button variant="gold" fullWidth size="lg" type="submit" disabled={verifying} shimmer>
                         {verifying ? (
@@ -218,26 +308,122 @@ export default function LoginClient({ initialData }: { initialData: { categories
                             Verifying...
                           </span>
                         ) : (
-                          "Verify & Log In"
+                          "Verify"
                         )}
                       </Button>
                     </div>
                   </form>
-
+ 
+                  <div className="flex justify-between items-center text-xs pt-2 border-t border-gray-100 dark:border-zinc-800">
+                    <span className="font-semibold text-brand-green/60 dark:text-brand-cream/60">
+                      {timerActive ? `Resend in ${resendTimer}s` : "Didn't receive code?"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleResendCode}
+                      disabled={timerActive}
+                      className={`font-bold hover:underline focus:outline-none ${
+                        timerActive 
+                          ? "text-gray-400 dark:text-zinc-600 cursor-not-allowed" 
+                          : "text-brand-gold cursor-pointer"
+                      }`}
+                    >
+                      Resend Code
+                    </button>
+                  </div>
+ 
                   <button
-                    onClick={() => setNeedsVerification(false)}
+                    onClick={() => setVerificationStep("form")}
+                    className="w-full text-center text-xs font-bold text-brand-gold hover:text-brand-gold-dark cursor-pointer focus:outline-none"
+                  >
+                    Back to Login
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Mobile Verification Screen */}
+                  <div className="text-center space-y-2">
+                    <div className="w-12 h-12 rounded-full bg-brand-gold/15 flex items-center justify-center text-brand-gold mx-auto">
+                      <ShieldCheck className="w-7 h-7" />
+                    </div>
+                    <h3 className="font-serif text-xl font-extrabold text-brand-green dark:text-brand-cream">
+                      Verify Mobile Number
+                    </h3>
+                    <p className="text-xs text-brand-green/60 dark:text-brand-cream/60 font-semibold leading-relaxed">
+                      We have simulated a 6-digit OTP to your registered mobile number. Please check your logs/console output to retrieve it.
+                    </p>
+                  </div>
+ 
+                  <form onSubmit={handleMobileVerificationSubmit} className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="block text-xs font-bold uppercase text-brand-gold text-center">Enter OTP</label>
+                      <input
+                        type="text"
+                        required
+                        maxLength={6}
+                        placeholder="749382"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        className="w-full text-center text-lg tracking-[0.4em] py-3 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-brand-green dark:text-brand-cream focus:outline-none focus:ring-1 focus:ring-brand-gold font-black"
+                      />
+                    </div>
+ 
+                    {successMessage && (
+                      <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold text-center whitespace-pre-line">
+                        {successMessage}
+                      </div>
+                    )}
+ 
+                    {verificationError && (
+                      <p className="text-xs text-red-500 font-bold text-center">{verificationError}</p>
+                    )}
+ 
+                    <div className="pt-2">
+                      <Button variant="gold" fullWidth size="lg" type="submit" disabled={verifying} shimmer>
+                        {verifying ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Verifying...
+                          </span>
+                        ) : (
+                          "Verify"
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+ 
+                  <div className="flex justify-between items-center text-xs pt-2 border-t border-gray-100 dark:border-zinc-800">
+                    <span className="font-semibold text-brand-green/60 dark:text-brand-cream/60">
+                      {timerActive ? `Resend OTP in ${resendTimer}s` : "Didn't receive OTP?"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleResendCode}
+                      disabled={timerActive}
+                      className={`font-bold hover:underline focus:outline-none ${
+                        timerActive 
+                          ? "text-gray-400 dark:text-zinc-600 cursor-not-allowed" 
+                          : "text-brand-gold cursor-pointer"
+                      }`}
+                    >
+                      Resend OTP
+                    </button>
+                  </div>
+ 
+                  <button
+                    onClick={() => setVerificationStep("form")}
                     className="w-full text-center text-xs font-bold text-brand-gold hover:text-brand-gold-dark cursor-pointer focus:outline-none"
                   >
                     Back to Login
                   </button>
                 </div>
               )}
-
+ 
             </CardContent>
           </Card>
         </div>
       </main>
-
+ 
       <Footer
         categories={initialData.categories}
         config={initialData.config}

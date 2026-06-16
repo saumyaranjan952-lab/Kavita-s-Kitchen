@@ -65,13 +65,22 @@ export default async function AdminCustomersPage() {
                     )}
                   </td>
                   <td className="py-4 px-4">
-                    <span className={`inline-block px-2.5 py-0.5 border rounded-md text-[9px] uppercase font-black ${
-                      u.isVerified
-                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
-                        : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
-                    }`}>
-                      {u.isVerified ? "Verified" : "Unverified"}
-                    </span>
+                    <div className="flex flex-col sm:flex-row gap-1.5">
+                      <span className={`inline-block px-2 py-0.5 border rounded-md text-[9px] font-black tracking-wide ${
+                        u.emailVerified
+                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
+                      }`}>
+                        {u.emailVerified ? "📧 Email OK" : "📧 Email Pending"}
+                      </span>
+                      <span className={`inline-block px-2 py-0.5 border rounded-md text-[9px] font-black tracking-wide ${
+                        u.phoneVerified
+                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
+                      }`}>
+                        {u.phoneVerified ? "📱 Mobile OK" : "📱 Mobile Pending"}
+                      </span>
+                    </div>
                   </td>
                   <td className="py-4 px-4 text-center sm:text-left">
                     <span className="text-xs font-black uppercase text-brand-gold bg-brand-gold/10 px-2.5 py-0.5 rounded-md">

@@ -58,77 +58,114 @@ export async function detectIdentifierType(identifier: string):
 /**
  * Handles customer registration.
  */
+/**
+ * Handles customer registration.
+ */
 export async function customerSignup(prevState: any, formData: FormData) {
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const phone = formData.get("phone") as string;
+  const name = (formData.get("name") as string || "").trim();
+  const email = (formData.get("email") as string || "").trim();
+  const phone = (formData.get("phone") as string || "").trim();
   const password = formData.get("password") as string;
 
-  if (!name || !email || !password) {
-    return { error: "Please enter all required fields (Name, Email, Password)." };
+  if (!name || !email || !phone || !password) {
+    return { error: "Please enter all required fields (Name, Email, Mobile Number, Password)." };
   }
 
   // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email.trim())) {
+  if (!emailRegex.test(email)) {
     return { error: "❌ Invalid Email Address" };
   }
 
-  let normalizedPhone: string | null = null;
-  if (phone && phone.trim()) {
-    const phoneDetection = await detectIdentifierType(phone);
-    if (phoneDetection.type !== "mobile") {
-      return { error: "❌ Invalid Mobile Number" };
-    }
-    normalizedPhone = phoneDetection.normalized;
+  const phoneDetection = await detectIdentifierType(phone);
+  if (phoneDetection.type !== "mobile") {
+    return { error: "❌ Invalid Mobile Number" };
   }
+  const normalizedPhone = phoneDetection.normalized;
 
   try {
-    const existing = await db.user.findUnique({
-      where: { email: email.trim().toLowerCase() },
+    // Check if an account already exists and is fully verified
+    const existingEmailUser = await db.user.findUnique({
+      where: { email: email.toLowerCase() },
     });
-
-    if (existing) {
+    if (existingEmailUser && existingEmailUser.emailVerified && existingEmailUser.phoneVerified) {
       return { error: "An account with this email already exists." };
     }
 
-    if (normalizedPhone) {
-      const existingPhone = await db.user.findFirst({
-        where: { phone: normalizedPhone },
-      });
-      if (existingPhone) {
-        return { error: "An account with this phone number already exists." };
-      }
+    const existingPhoneUser = await db.user.findFirst({
+      where: { phone: normalizedPhone },
+    });
+    if (existingPhoneUser && existingPhoneUser.emailVerified && existingPhoneUser.phoneVerified) {
+      return { error: "An account with this phone number already exists." };
     }
 
+    // Reuse existing unverified user, or create new
     const passwordHash = hashPassword(password);
-    const verificationToken = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+    const emailCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+    const emailCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
-    const user = await db.user.create({
-      data: {
-        name,
-        email: email.trim().toLowerCase(),
-        phone: normalizedPhone,
-        passwordHash,
-        isVerified: false,
-        verificationToken,
-      },
-    });
+    let user;
+    if (existingEmailUser) {
+      user = await db.user.update({
+        where: { id: existingEmailUser.id },
+        data: {
+          name,
+          phone: normalizedPhone,
+          passwordHash,
+          emailCode,
+          emailCodeExpires,
+          verificationAttempts: 0,
+          emailVerified: false,
+          phoneVerified: false,
+          isVerified: false,
+        },
+      });
+    } else if (existingPhoneUser) {
+      user = await db.user.update({
+        where: { id: existingPhoneUser.id },
+        data: {
+          name,
+          email: email.toLowerCase(),
+          passwordHash,
+          emailCode,
+          emailCodeExpires,
+          verificationAttempts: 0,
+          emailVerified: false,
+          phoneVerified: false,
+          isVerified: false,
+        },
+      });
+    } else {
+      user = await db.user.create({
+        data: {
+          name,
+          email: email.toLowerCase(),
+          phone: normalizedPhone,
+          passwordHash,
+          emailCode,
+          emailCodeExpires,
+          verificationAttempts: 0,
+          emailVerified: false,
+          phoneVerified: false,
+          isVerified: false,
+        },
+      });
+    }
 
     // Simulated Email Notification
-    console.log(`[SIMULATED EMAIL] To: ${email} | Subject: Verify Your Email - Kavita's Kitchen | Content: Your code is ${verificationToken}`);
+    console.log(`[SIMULATED EMAIL] To: ${user.email} | Subject: Verify Your Kavita's Kitchen Account | Content: Welcome to Kavita's Kitchen! Your verification code is: ${emailCode}. This code expires in 10 minutes. If you did not request this account, please ignore this email.`);
 
     // Create a notification record for the user
     await db.notification.create({
       data: {
         userId: user.id,
-        title: "Welcome to Kavita's Kitchen!",
-        message: `Please verify your email using the code: ${verificationToken}`,
+        title: "Verify Your Kavita's Kitchen Account",
+        message: `Welcome to Kavita's Kitchen! Your verification code is: ${emailCode}`,
         type: "CUSTOMER_ORDER",
       },
     });
 
-    return { success: true, email: user.email };
+    return { success: true, email: user.email, step: "email" };
   } catch (error: any) {
     console.error("Signup error:", error);
     return { error: "Failed to create account. Please try again." };
@@ -138,29 +175,125 @@ export async function customerSignup(prevState: any, formData: FormData) {
 /**
  * Verifies email using verification code.
  */
-export async function verifyCustomerEmail(email: string, code: string) {
+export async function verifyCustomerEmailCode(email: string, code: string) {
   if (!email || !code) {
     return { error: "Verification details missing." };
   }
 
   try {
     const user = await db.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase() },
     });
 
     if (!user) {
       return { error: "User not found." };
     }
 
-    if (user.verificationToken !== code) {
-      return { error: "Invalid verification code." };
+    if (user.verificationAttempts >= 5) {
+      return { error: "❌ Too Many Attempts" };
     }
+
+    if (!user.emailCodeExpires || user.emailCodeExpires < new Date()) {
+      return { error: "❌ OTP Expired" };
+    }
+
+    if (user.emailCode !== code) {
+      await db.user.update({
+        where: { id: user.id },
+        data: { verificationAttempts: { increment: 1 } },
+      });
+      return { error: "❌ Invalid Verification Code" };
+    }
+
+    // Generate phone OTP
+    const phoneCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    const phoneCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
     await db.user.update({
       where: { id: user.id },
       data: {
-        isVerified: true,
-        verificationToken: null,
+        emailVerified: true,
+        emailCode: null,
+        emailCodeExpires: null,
+        phoneCode,
+        phoneCodeExpires,
+        verificationAttempts: 0, // Reset attempts for phone step
+      },
+    });
+
+    // Simulated Mobile OTP (Twilio, MSG91, Firebase, AWS SNS)
+    console.log(`[SIMULATED OTP] To Mobile: ${user.phone} | Your OTP is: ${phoneCode}. This OTP expires in 10 minutes.`);
+
+    // Create a notification record
+    await db.notification.create({
+      data: {
+        userId: user.id,
+        title: "Mobile Verification OTP Sent",
+        message: `Your Mobile OTP code is: ${phoneCode}`,
+        type: "CUSTOMER_ORDER",
+      },
+    });
+
+    return { success: true, step: "mobile" };
+  } catch (error) {
+    console.error("Email verification error:", error);
+    return { error: "Email verification failed. Please try again." };
+  }
+}
+
+/**
+ * Backward compatibility wrapper
+ */
+export async function verifyCustomerEmail(email: string, code: string) {
+  return verifyCustomerEmailCode(email, code);
+}
+
+/**
+ * Verifies mobile number using OTP.
+ */
+export async function verifyCustomerPhoneOTP(email: string, otp: string) {
+  if (!email || !otp) {
+    return { error: "Verification details missing." };
+  }
+
+  try {
+    const user = await db.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (!user) {
+      return { error: "User not found." };
+    }
+
+    if (!user.emailVerified) {
+      return { error: "Please verify your email first." };
+    }
+
+    if (user.verificationAttempts >= 5) {
+      return { error: "❌ Too Many Attempts" };
+    }
+
+    if (!user.phoneCodeExpires || user.phoneCodeExpires < new Date()) {
+      return { error: "❌ OTP Expired" };
+    }
+
+    if (user.phoneCode !== otp) {
+      await db.user.update({
+        where: { id: user.id },
+        data: { verificationAttempts: { increment: 1 } },
+      });
+      return { error: "❌ Invalid OTP" };
+    }
+
+    // Success! Fully verify user account
+    await db.user.update({
+      where: { id: user.id },
+      data: {
+        phoneVerified: true,
+        isVerified: true, // both verified
+        phoneCode: null,
+        phoneCodeExpires: null,
+        verificationAttempts: 0,
       },
     });
 
@@ -179,15 +312,70 @@ export async function verifyCustomerEmail(email: string, code: string) {
     cookieStore.set("session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
+      maxAge: 60 * 60 * 24 * 30, // 30 days
       path: "/",
       sameSite: "lax",
     });
 
     return { success: true };
   } catch (error) {
-    console.error("Verification error:", error);
-    return { error: "Email verification failed." };
+    console.error("Mobile verification error:", error);
+    return { error: "Mobile verification failed. Please try again." };
+  }
+}
+
+/**
+ * Resends verification code/OTP.
+ */
+export async function resendVerificationCode(email: string, type: "email" | "mobile") {
+  if (!email) {
+    return { error: "Email address missing." };
+  }
+
+  try {
+    const user = await db.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (!user) {
+      return { error: "User not found." };
+    }
+
+    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    if (type === "email") {
+      await db.user.update({
+        where: { id: user.id },
+        data: {
+          emailCode: newCode,
+          emailCodeExpires: expires,
+          verificationAttempts: 0,
+        },
+      });
+
+      console.log(`[SIMULATED EMAIL] To: ${user.email} | Subject: Verify Your Kavita's Kitchen Account | Content: Welcome to Kavita's Kitchen! Your verification code is: ${newCode}. This code expires in 10 minutes.`);
+    } else {
+      if (!user.emailVerified) {
+        return { error: "Please verify your email first." };
+      }
+
+      await db.user.update({
+        where: { id: user.id },
+        data: {
+          phoneCode: newCode,
+          phoneCodeExpires: expires,
+          verificationAttempts: 0,
+        },
+      });
+
+      console.log(`[SIMULATED OTP] To Mobile: ${user.phone} | Your OTP is: ${newCode}. This OTP expires in 10 minutes.`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Resend error:", error);
+    return { error: "Failed to resend code. Please try again." };
   }
 }
 
@@ -229,11 +417,41 @@ export async function customerLogin(prevState: any, formData: FormData) {
       return { error: "❌ Incorrect Password" };
     }
 
-    if (!user.isVerified) {
+    // Require both email and mobile number verification
+    if (!user.emailVerified || !user.phoneVerified) {
+      // Re-trigger verification codes if missing/expired
+      const emailCode = user.emailCode || Math.floor(100000 + Math.random() * 900000).toString();
+      const emailCodeExpires = user.emailCodeExpires || new Date(Date.now() + 10 * 60 * 1000);
+      
+      let phoneCode = user.phoneCode;
+      let phoneCodeExpires = user.phoneCodeExpires;
+      if (user.emailVerified && !phoneCode) {
+        phoneCode = Math.floor(100000 + Math.random() * 900000).toString();
+        phoneCodeExpires = new Date(Date.now() + 10 * 60 * 1000);
+      }
+
+      await db.user.update({
+        where: { id: user.id },
+        data: {
+          emailCode,
+          emailCodeExpires,
+          phoneCode,
+          phoneCodeExpires,
+        }
+      });
+
+      if (!user.emailVerified) {
+        console.log(`[SIMULATED EMAIL] To: ${user.email} | Subject: Verify Your Kavita's Kitchen Account | Content: Welcome to Kavita's Kitchen! Your verification code is: ${emailCode}.`);
+      } else {
+        console.log(`[SIMULATED OTP] To Mobile: ${user.phone} | Your OTP is: ${phoneCode}.`);
+      }
+
       return { 
-        error: "Please verify your email before logging in.", 
+        error: "Please verify your email and mobile number before logging in.", 
         requiresVerification: true,
-        email: user.email 
+        email: user.email,
+        emailVerified: user.emailVerified,
+        phoneVerified: user.phoneVerified,
       };
     }
 
